@@ -22,6 +22,7 @@
 #include "NES/Mappers/Homebrew/Cheapocabra.h"
 #include "NES/Mappers/Homebrew/FaridSlrom.h"
 #include "NES/Mappers/Homebrew/FaridUnrom.h"
+#include "NES/Mappers/Homebrew/Rainbow.h"
 #include "NES/Mappers/Homebrew/SealieComputing.h"
 #include "NES/Mappers/Homebrew/UnRom512.h"
 #include "NES/Mappers/Homebrew/UnlDripGame.h"
@@ -614,6 +615,8 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 528: break; //831128C
 		case 529: return new T230();
 		case 530: return new Ax5705();
+
+		case 682: return new RNBW();
 
 		case UnifBoards::Ac08: return new Ac08(); //mapper 42?
 		case UnifBoards::Cc21: return new Cc21();

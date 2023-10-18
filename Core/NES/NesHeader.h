@@ -15,6 +15,7 @@ struct NesHeader
 	Byte 11 	Unused 				Unused 								VRAM size (logarithmic; battery and non-battery)
 	Byte 12 	Unused 				Unused 								TV system
 	Byte 13 	Unused 				Unused 								Vs. PPU variant
+	Byte 14 	Unused 				Unused 								Number of miscellaneous ROMs
 	*/
 	char NES[4];
 	uint8_t PrgCount;
@@ -44,6 +45,7 @@ struct NesHeader
 	int32_t GetChrRamSize();
 	int32_t GetSaveChrRamSize();
 	uint8_t GetSubMapper();
+	uint8_t GetMiscRomsNumber();
 	MirroringType GetMirroringType();
 	GameInputType GetInputType();
 	VsSystemType GetVsSystemType();

@@ -1228,6 +1228,15 @@
     <ClInclude Include="NES\Mappers\Audio\Namco163Audio.h">
       <Filter>NES\Mappers\Audio</Filter>
     </ClInclude>
+    <ClInclude Include="NES\Mappers\Audio\RainbowAudio.h">
+      <Filter>NES\Mappers\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="NES\Mappers\Audio\RainbowPulse.h">
+      <Filter>NES\Mappers\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="NES\Mappers\Audio\RainbowSaw.h">
+      <Filter>NES\Mappers\Audio</Filter>
+    </ClInclude>
     <ClInclude Include="NES\Mappers\Audio\Sunsoft5bAudio.h">
       <Filter>NES\Mappers\Audio</Filter>
     </ClInclude>
@@ -2208,6 +2217,12 @@
     <ClInclude Include="NES\Mappers\Homebrew\FlashSST39SF040.h">
       <Filter>NES\Mappers\Homebrew</Filter>
     </ClInclude>
+    <ClInclude Include="NES\Mappers\Homebrew\Flash3_3V.h">
+      <Filter>NES\Mappers\Homebrew</Filter>
+    </ClInclude>
+    <ClInclude Include="NES\Mappers\Homebrew\Rainbow.h">
+      <Filter>NES\Mappers\Homebrew</Filter>
+    </ClInclude>
     <ClInclude Include="NES\Mappers\Homebrew\SealieComputing.h">
       <Filter>NES\Mappers\Homebrew</Filter>
     </ClInclude>
@@ -2586,6 +2601,12 @@
     <ClInclude Include="NES\Mappers\Nintendo\FnsMmc1.h">
       <Filter>NES\Mappers\Nintendo</Filter>
     </ClInclude>
+    <ClInclude Include="NES\Mappers\Homebrew\RainbowESP.h">
+      <Filter>NES\Mappers\Homebrew</Filter>
+    </ClInclude>
+    <ClInclude Include="NES\Mappers\Homebrew\RainbowMemoryHandler.h">
+      <Filter>NES\Mappers\Homebrew</Filter>
+    </ClInclude>
     <ClInclude Include="SMS\SmsConsole.h">
       <Filter>SMS</Filter>
     </ClInclude>
@@ -2917,6 +2938,9 @@
     </ClCompile>
     <ClCompile Include="Gameboy\APU\GbWaveChannel.cpp">
       <Filter>Gameboy\APU</Filter>
+    </ClCompile>
+    <ClCompile Include="NES\Mappers\Homebrew\RainbowESP.cpp">
+      <Filter>NES\Mappers\Homebrew</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -178,6 +178,15 @@ uint8_t NesHeader::GetSubMapper()
 	}
 }
 
+uint8_t NesHeader::GetMiscRomsNumber()
+{
+	if(GetRomHeaderVersion() == RomHeaderVersion::Nes2_0) {
+		return Byte14 & 0x03;
+	} else {
+		return 0;
+	}
+}
+
 MirroringType NesHeader::GetMirroringType()
 {
 	if(Byte6 & 0x08) {

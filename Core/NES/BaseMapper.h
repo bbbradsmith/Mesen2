@@ -198,8 +198,20 @@ public:
 		return value;
 	}
 
+	virtual void MapperWriteVram(uint16_t addr, uint8_t value) {};
+
+	__forceinline void WriteVram(uint16_t addr, uint8_t value)
+	{
+		MapperWriteVram(addr, value);
+		_emu->ProcessPpuWrite<CpuType::Nes>(addr, value, MemoryType::NesPpuMemory);
+
+		if(_chrMemoryAccess[addr >> 8] & MemoryAccessType::Write) {
+			_chrPages[addr >> 8][(uint8_t)addr] = value;
+		}
+	}
+
 	void DebugWriteVram(uint16_t addr, uint8_t value, bool disableSideEffects = true);
-	void WriteVram(uint16_t addr, uint8_t value);
+	//void WriteVram(uint16_t addr, uint8_t value);
 
 	uint8_t DebugReadVram(uint16_t addr, bool disableSideEffects = true);
 

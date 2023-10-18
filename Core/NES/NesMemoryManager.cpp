@@ -77,7 +77,7 @@ void NesMemoryManager::RegisterIODevice(INesMemoryHandler*handler)
 
 void NesMemoryManager::RegisterWriteHandler(INesMemoryHandler* handler, uint32_t start, uint32_t end)
 {
-	for(uint32_t i = start; i < end; i++) {
+	for(uint32_t i = start; i <= end; i++) {
 		_ramWriteHandlers[i] = handler;
 	}
 }

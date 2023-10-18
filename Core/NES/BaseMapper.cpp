@@ -901,7 +901,7 @@ void BaseMapper::DebugWriteVram(uint16_t addr, uint8_t value, bool disableSideEf
 		}
 	}
 }
-
+/*
 void BaseMapper::WriteVram(uint16_t addr, uint8_t value)
 {
 	_emu->ProcessPpuWrite<CpuType::Nes>(addr, value, MemoryType::NesPpuMemory);
@@ -910,7 +910,7 @@ void BaseMapper::WriteVram(uint16_t addr, uint8_t value)
 		_chrPages[addr >> 8][(uint8_t)addr] = value;
 	}
 }
-
+*/
 bool BaseMapper::IsNes20()
 {
 	return _romInfo.Header.GetRomHeaderVersion() == RomHeaderVersion::Nes2_0;
