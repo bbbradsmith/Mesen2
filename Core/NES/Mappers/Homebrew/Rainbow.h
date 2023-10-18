@@ -1227,7 +1227,7 @@ protected:
 		_scanlineIrqHblank = _dotCounter > 127;
 
 		if(_scanlineCounter == _scanlineIrqLatch && !_scanlineIrqPending) {
-			if(_dotCounter == _scanlineIrqOffset) {
+			if(_dotCounter == _scanlineIrqOffset || (_scanlineIrqOffset == 0 && _dotCounter == 1)) {
 				_scanlineIrqPending = true;
 				_scanlineIrqJitterCounter = 0;
 				if(_scanlineIrqEnable) {
