@@ -53,17 +53,17 @@ public:
 	void WriteRegister(uint16_t addr, uint8_t value)
 	{
 		switch(addr) {
-			case 0x4150: case 0x4151: case 0x4152:
+			case 0x41A0: case 0x41A1: case 0x41A2:
 				//_pulse1.WriteReg(addr, value);
 				_pulse1.WriteReg(addr & 0x03, value);
 				break;
 
-			case 0x4153: case 0x4154: case 0x4155:
+			case 0x41A3: case 0x41A4: case 0x41A5:
 				//_pulse2.WriteReg(addr, value);
 				_pulse2.WriteReg((addr - 3) & 0x03, value);
 				break;
 
-			case 0x4156: case 0x4157: case 0x4158:
+			case 0x41A6: case 0x41A7: case 0x41A8:
 				//_saw.WriteReg(addr, value);
 				_saw.WriteReg((addr - 6) & 0x03, value);
 				break;
