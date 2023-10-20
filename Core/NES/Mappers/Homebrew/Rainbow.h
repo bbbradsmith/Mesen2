@@ -1413,76 +1413,82 @@ protected:
 	vector<MapperStateEntry> GetMapperStateEntries() override
 	{
 		vector<MapperStateEntry> entries;
-		/*
-				entries.push_back(MapperStateEntry("$4100.0-2", "PRG ROM Mode", _prgRomMode, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4100.7", "PRG RAM Mode", _prgRamMode, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4100.0-2", "PRG ROM Mode", _prgRomMode, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4100.7", "PRG RAM Mode", _prgRamMode, MapperStateValueType::Number8));
 
-				entries.push_back(MapperStateEntry("$4115.0", "PRG Bank Register 0", _prg[0], MapperStateValueType::Number8));
-				for(int i = 1; i < 12; i++) {
-					// TODO: special case for $4106/7 chip selector
-					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4106 + i) + ".7", "PRG Bank Chip Selector Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), (_prg[i] & 8000) >> 15, MapperStateValueType::Number8));
-					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4106 + i) + ".0-6", "PRG Bank Upper Bits Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), (_prg[i] & 0x7F00) >> 8, MapperStateValueType::Number8));
-					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4116 + i), "PRG Bank Lower Bits Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), _prg[i] & 0xFF, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4115.0", "PRG Bank Register 0", _prg[0], MapperStateValueType::Number8));
+		for(int i = 1; i < 12; i++) {
+			if(i == 1 || i == 2) {
+				if((_prg[i] & 8000) >> 15 == 0) { // PRG-ROM
+					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4106 + i) + ".7", "PRG Bank Chip Selector Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), (_prg[i] & 0x8000) >> 15, MapperStateValueType::Number8));
+				} else { // PRG-RAM or FPGA-RAM
+					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4106 + i) + ".6-7", "PRG Bank Chip Selector Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), (_prg[i] & 0xC000) >> 14, MapperStateValueType::Number8));
 				}
+			} else {
+				entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4106 + i) + ".7", "PRG Bank Chip Selector Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), (_prg[i] & 0x8000) >> 15, MapperStateValueType::Number8));
+			}
+			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4106 + i) + ".0-6", "PRG Bank Upper Bits Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), (_prg[i] & 0x7F00) >> 8, MapperStateValueType::Number8));
+			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4116 + i), "PRG Bank Lower Bits Register " + HexUtilities::ToHex(0x6000 + i * 0x1000), _prg[i] & 0xFF, MapperStateValueType::Number8));
+		}
 
-				entries.push_back(MapperStateEntry("$4120.0-2", "CHR Mode", _chrMode, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4120.4", "Window Split Mode", _windowModeEnabled));
-				entries.push_back(MapperStateEntry("$4120.5", "Sprite Extended Mode", _chrSprExtMode));
-				entries.push_back(MapperStateEntry("$4120.6-7", "CHR Chip Selector", _chrChip, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4121.0-4", "Background Extended Mode Bank Upper Bits", _bgBankOffset, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4120.0-2", "CHR Mode", _chrMode, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4120.4", "Window Split Mode", _windowModeEnabled));
+		entries.push_back(MapperStateEntry("$4120.5", "Sprite Extended Mode", _chrSprExtMode));
+		entries.push_back(MapperStateEntry("$4120.6-7", "CHR Chip Selector", _chrChip, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4121.0-4", "Background Extended Mode Bank Upper Bits", _bgBankOffset, MapperStateValueType::Number8));
 
-				entries.push_back(MapperStateEntry("$4126", "Nametable A ($2000) Bank", _ntBank[0], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4127", "Nametable B ($2400) Bank", _ntBank[1], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4128", "Nametable C ($2800) Bank", _ntBank[2], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4129", "Nametable D ($2C00) Bank", _ntBank[3], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4126", "Nametable A ($2000) Bank", _ntBank[0], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4127", "Nametable B ($2400) Bank", _ntBank[1], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4128", "Nametable C ($2800) Bank", _ntBank[2], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4129", "Nametable D ($2C00) Bank", _ntBank[3], MapperStateValueType::Number8));
 
-				entries.push_back(MapperStateEntry("$412A", "Nametable A ($2000) Control", _ntControl[0], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$412B", "Nametable B ($2400) Control", _ntControl[1], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$412C", "Nametable C ($2800) Control", _ntControl[2], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$412D", "Nametable D ($2C00) Control", _ntControl[3], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412A", "Nametable A ($2000) Control", _ntControl[0], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412B", "Nametable B ($2400) Control", _ntControl[1], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412C", "Nametable C ($2800) Control", _ntControl[2], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412D", "Nametable D ($2C00) Control", _ntControl[3], MapperStateValueType::Number8));
 
-				entries.push_back(MapperStateEntry("$412E", "Nametable D (Window Split) Bank", _ntBank[4], MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$412F", "Nametable D (Window Split) Control", _ntControl[4], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412E", "Nametable D (Window Split) Bank", _ntBank[4], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412F", "Nametable D (Window Split) Control", _ntControl[4], MapperStateValueType::Number8));
 
-				for(int i = 0; i < 16; i++) {
-					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4130 + i), "CHR Bank Upper Bits Register " + std::to_string(i), _chr[i] & 0xFF, MapperStateValueType::Number8));
-					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4140 + i), "CHR Bank Lower Bits Register " + std::to_string(i), (_chr[i] & 0xFF00) >> 8, MapperStateValueType::Number8));
-				}
+		for(int i = 0; i < 16; i++) {
+			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4130 + i), "CHR Bank Upper Bits Register " + std::to_string(i), _chr[i] & 0xFF, MapperStateValueType::Number8));
+			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4140 + i), "CHR Bank Lower Bits Register " + std::to_string(i), (_chr[i] & 0xFF00) >> 8, MapperStateValueType::Number8));
+		}
 
-				entries.push_back(MapperStateEntry("$4150", "Scanline IRQ Latch Value", _scanlineIrqLatch, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4151", "Scanline IRQ Enable", _scanlineIrqEnable));
-				entries.push_back(MapperStateEntry("$4153", "Scanline IRQ Offset Value", _scanlineIrqLatch, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4150", "Scanline IRQ Latch Value", _scanlineIrqLatch, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4151", "Scanline IRQ Enable", _scanlineIrqEnable));
+		entries.push_back(MapperStateEntry("$4153", "Scanline IRQ Offset Value", _scanlineIrqLatch, MapperStateValueType::Number8));
 
-				entries.push_back(MapperStateEntry("$4158", "CPU Cycle IRQ Latch Low Value", _cpuCycleIrqLatch & 0xFF, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4159", "CPU Cycle IRQ Latch High Value", (_cpuCycleIrqLatch & 0xFF00) >> 8, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$415A.0", "CPU Cycle IRQ Enable", _cpuCycleIrqEnable));
-				entries.push_back(MapperStateEntry("$415A.1", "CPU Cycle IRQ Reset", _cpuCycleIrqReset));
+		entries.push_back(MapperStateEntry("$4158", "CPU Cycle IRQ Latch Low Value", _cpuCycleIrqLatch & 0xFF, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4159", "CPU Cycle IRQ Latch High Value", (_cpuCycleIrqLatch & 0xFF00) >> 8, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$415A.0", "CPU Cycle IRQ Enable", _cpuCycleIrqEnable));
+		entries.push_back(MapperStateEntry("$415A.1", "CPU Cycle IRQ Reset", _cpuCycleIrqReset));
 
-				entries.push_back(MapperStateEntry("$4160", "Mapper Version", MAPPER_VERSION, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4161.0", "ESP/Wi-Fi IRQ Status", _espIrqPending));
-				entries.push_back(MapperStateEntry("$4161.6", "CPU Cycle IRQ Status", _cpuCycleIrqPending));
-				entries.push_back(MapperStateEntry("$4161.7", "Scanline IRQ Status", _scanlineIrqPending));
+		entries.push_back(MapperStateEntry("$4160", "Mapper Version", MAPPER_VERSION, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4161.0", "ESP/Wi-Fi IRQ Status", _espIrqPending));
+		entries.push_back(MapperStateEntry("$4161.6", "CPU Cycle IRQ Status", _cpuCycleIrqPending));
+		entries.push_back(MapperStateEntry("$4161.7", "Scanline IRQ Status", _scanlineIrqPending));
 
-				entries.push_back(MapperStateEntry("$4170.0-4", "Window Split Mode X Start Tile", _windowXStartTile, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4171.0-4", "Window Split Mode X End Tile", _windowXEndTile, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4172", "Window Split Mode Y Start", _windowYStart, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4173", "Window Split Mode Y End", _windowYEnd, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4174.0-4", "Window Split Mode X Scroll (Tile)", _windowXScroll, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4175", "Window Split Mode Y Scroll", _windowYScroll, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4170.0-4", "Window Split Mode X Start Tile", _windowXStartTile, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4171.0-4", "Window Split Mode X End Tile", _windowXEndTile, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4172", "Window Split Mode Y Start", _windowYStart, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4173", "Window Split Mode Y End", _windowYEnd, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4174.0-4", "Window Split Mode X Scroll (Tile)", _windowXScroll, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4175", "Window Split Mode Y Scroll", _windowYScroll, MapperStateValueType::Number8));
 
-				entries.push_back(MapperStateEntry("$4190.0", "ESP/Wi-Fi Enable", _espEnable));
-				entries.push_back(MapperStateEntry("$4190.1", "ESP/Wi-Fi IRQ Enable", _espIrqEnable));
-				entries.push_back(MapperStateEntry("$4191.6", "ESP/Wi-Fi RX Data Ready (R)", _esp->getDataReadyIO()));
-				entries.push_back(MapperStateEntry("$4191.7", "ESP/Wi-Fi RX Data Received (R)", _espHasReceivedMessage));
-				entries.push_back(MapperStateEntry("$4192.7", "ESP/Wi-Fi TX Data Sent (R)", _espMessageSent));
-				entries.push_back(MapperStateEntry("$4193.0-2", "ESP/Wi-Fi RX Ram Destination", _espRxAddress, MapperStateValueType::Number8));
-				entries.push_back(MapperStateEntry("$4194.0-2", "ESP/Wi-Fi TX Ram Destination", _espTxAddress, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4190.0", "ESP/Wi-Fi Enable", _espEnable));
+		entries.push_back(MapperStateEntry("$4190.1", "ESP/Wi-Fi IRQ Enable", _espIrqEnable));
+		entries.push_back(MapperStateEntry("$4191.6", "ESP/Wi-Fi RX Data Ready (R)", _esp->getDataReadyIO()));
+		entries.push_back(MapperStateEntry("$4191.7", "ESP/Wi-Fi RX Data Received (R)", _espHasReceivedMessage));
+		entries.push_back(MapperStateEntry("$4192.7", "ESP/Wi-Fi TX Data Sent (R)", _espMessageSent));
+		entries.push_back(MapperStateEntry("$4193.0-2", "ESP/Wi-Fi RX Ram Destination", _espRxAddress, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4194.0-2", "ESP/Wi-Fi TX Ram Destination", _espTxAddress, MapperStateValueType::Number8));
 
-				for(int i = 0; i < 64; i++) {
-					entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4200 + i), "Sprite Extended Mode Lower Bits Bank Register " + std::to_string(i), _spriteBank[i] & 0xFF, MapperStateValueType::Number8));
-				}
-				entries.push_back(MapperStateEntry("$4240.0-2", "Sprite Extended Mode Upper Bits Bank", _spriteBankOffset, MapperStateValueType::Number8));
-		*/
+		for(int i = 0; i < 64; i++) {
+			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4200 + i), "Sprite Extended Mode Lower Bits Bank Register " + std::to_string(i), _spriteBank[i] & 0xFF, MapperStateValueType::Number8));
+		}
+		entries.push_back(MapperStateEntry("$4240.0-2", "Sprite Extended Mode Upper Bits Bank", _spriteBankOffset, MapperStateValueType::Number8));
+
 		// TODO
 		// _audio->GetMapperStateEntries(entries);
 
