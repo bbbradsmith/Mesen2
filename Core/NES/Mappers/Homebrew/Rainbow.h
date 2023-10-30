@@ -153,7 +153,8 @@ private:
 
 	// CPU CYCLE IRQ
 	bool _cpuCycleIrqEnable, _cpuCycleIrqReset, _cpuCycleIrqPending;
-	int32_t _cpuCycleIrqLatch, _cpuCycleIrqCount;
+	uint16_t _cpuCycleIrqLatch;
+	int32_t _cpuCycleIrqCount;
 
 protected:
 	uint16_t GetPrgPageSize() override { return 0x1000; }
@@ -161,7 +162,6 @@ protected:
 	uint16_t GetChrRamPageSize() override { return 0x200; }
 
 	uint16_t RegisterStartAddress() override { return 0x4100; }
-	//uint16_t RegisterEndAddress() override { return 0x47FF; }
 	uint16_t RegisterEndAddress() override { return 0xFFFF; }
 
 	uint32_t GetWorkRamPageSize() override { return 0x2000; }
@@ -824,8 +824,6 @@ protected:
 			case 0xFFFA:
 			case 0xFFFB:
 				_ppuInFrame = false;
-				//UpdateChrBanks(true);
-				UpdateChrBanks();
 				_lastPpuReadAddr = 0;
 				_scanlineIrqCounter = 0;
 				_scanlineIrqPending = false;
@@ -1411,13 +1409,13 @@ protected:
 		}
 		return flashAddr;
 	}
-
+	/*
 	vector<MapperStateEntry> GetMapperStateEntries() override
 	{
 		vector<MapperStateEntry> entries;
+
 		entries.push_back(MapperStateEntry("$4100.0-2", "PRG ROM Mode", _prgRomMode, MapperStateValueType::Number8));
 		entries.push_back(MapperStateEntry("$4100.7", "PRG RAM Mode", _prgRamMode, MapperStateValueType::Number8));
-
 		entries.push_back(MapperStateEntry("$4115.0", "PRG Bank Register 0", _prg[0], MapperStateValueType::Number8));
 		for(int i = 1; i < 12; i++) {
 			if(i == 1 || i == 2) {
@@ -1449,8 +1447,8 @@ protected:
 		entries.push_back(MapperStateEntry("$412C", "Nametable C ($2800) Control", _ntControl[2], MapperStateValueType::Number8));
 		entries.push_back(MapperStateEntry("$412D", "Nametable D ($2C00) Control", _ntControl[3], MapperStateValueType::Number8));
 
-		entries.push_back(MapperStateEntry("$412E", "Nametable D (Window Split) Bank", _ntBank[4], MapperStateValueType::Number8));
-		entries.push_back(MapperStateEntry("$412F", "Nametable D (Window Split) Control", _ntControl[4], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412E", "Nametable W (Window Split) Bank", _ntBank[4], MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$412F", "Nametable W (Window Split) Control", _ntControl[4], MapperStateValueType::Number8));
 
 		for(int i = 0; i < 16; i++) {
 			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4130 + i), "CHR Bank Upper Bits Register " + std::to_string(i), _chr[i] & 0xFF, MapperStateValueType::Number8));
@@ -1466,7 +1464,7 @@ protected:
 		entries.push_back(MapperStateEntry("$415A.0", "CPU Cycle IRQ Enable", _cpuCycleIrqEnable));
 		entries.push_back(MapperStateEntry("$415A.1", "CPU Cycle IRQ Reset", _cpuCycleIrqReset));
 
-		entries.push_back(MapperStateEntry("$4160", "Mapper Version", MAPPER_VERSION, MapperStateValueType::Number8));
+		entries.push_back(MapperStateEntry("$4160", "Mapper Version", (uint8_t)MAPPER_VERSION, MapperStateValueType::Number8));
 		entries.push_back(MapperStateEntry("$4161.0", "ESP/Wi-Fi IRQ Status", _espIrqPending));
 		entries.push_back(MapperStateEntry("$4161.6", "CPU Cycle IRQ Status", _cpuCycleIrqPending));
 		entries.push_back(MapperStateEntry("$4161.7", "Scanline IRQ Status", _scanlineIrqPending));
@@ -1487,7 +1485,7 @@ protected:
 		entries.push_back(MapperStateEntry("$4194.0-2", "ESP/Wi-Fi TX Ram Destination", _espTxAddress, MapperStateValueType::Number8));
 
 		for(int i = 0; i < 64; i++) {
-			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4200 + i), "Sprite Extended Mode Lower Bits Bank Register " + std::to_string(i), _spriteBank[i] & 0xFF, MapperStateValueType::Number8));
+			entries.push_back(MapperStateEntry("$" + HexUtilities::ToHex(0x4200 + i), "Sprite Extended Mode Lower Bits Bank Register " + std::to_string(i), _spriteBank[i], MapperStateValueType::Number8));
 		}
 		entries.push_back(MapperStateEntry("$4240.0-2", "Sprite Extended Mode Upper Bits Bank", _spriteBankOffset, MapperStateValueType::Number8));
 
@@ -1496,7 +1494,7 @@ protected:
 
 		return entries;
 	}
-
+	*/
 	__forceinline uint8_t ReadFromChr(uint32_t pos)
 	{
 		switch(_chrChip) {
