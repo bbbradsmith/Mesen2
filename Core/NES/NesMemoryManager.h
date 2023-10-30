@@ -44,6 +44,7 @@ public:
 
 	void Reset(bool softReset);
 	void RegisterIODevice(INesMemoryHandler* handler);
+	void RegisterReadHandler(INesMemoryHandler* handler, uint32_t start, uint32_t end);
 	void RegisterWriteHandler(INesMemoryHandler* handler, uint32_t start, uint32_t end);
 	void UnregisterIODevice(INesMemoryHandler* handler);
 

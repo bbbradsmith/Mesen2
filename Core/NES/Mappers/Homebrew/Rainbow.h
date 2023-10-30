@@ -214,7 +214,7 @@ protected:
 
 	void ClearIrq()
 	{
-		if(!_cpuCycleIrqPending && !_scanlineIrqPending && !_espIrqPending) {
+		if(!_cpuCycleIrqPending && !(_scanlineIrqPending && _scanlineIrqEnable) && !(_esp->getDataReadyIO() && _espHasReceivedMessage)) {
 			_console->GetCpu()->ClearIrqSource(IRQSource::External);
 		}
 	}
@@ -222,6 +222,7 @@ protected:
 	void Reset(bool softReset) override
 	{
 		_console->GetMemoryManager()->RegisterWriteHandler(_rainbowMemoryHandler.get(), 0x2000, 0x2007);
+		_console->GetMemoryManager()->RegisterReadHandler(_rainbowMemoryHandler.get(), 0x4011, 0x4011);
 		_console->GetMemoryManager()->RegisterWriteHandler(_rainbowMemoryHandler.get(), 0x4014, 0x4014);
 
 		// PRG - 32K banks mapped to first PRG-ROM bank
@@ -529,7 +530,6 @@ protected:
 			_cpuCycleIrqCount--;
 			if(_cpuCycleIrqCount < 0) {
 				_cpuCycleIrqCount = _cpuCycleIrqLatch;
-				_cpuCycleIrqEnable = _cpuCycleIrqReset;
 				_cpuCycleIrqPending = true;
 				TriggerIrq();
 			}
@@ -583,9 +583,6 @@ protected:
 
 	void InitMapper() override
 	{
-		//Override the 2000-2007 registers to catch all writes to the PPU registers (but not their mirrors)
-		_rainbowMemoryHandler.reset(new RainbowMemoryHandler(_console));
-
 		// PRG self-flashing
 		_prgFlash.reset(new Flash3_3V(_prgRom, _prgSize));
 		_orgPrgRom = vector<uint8_t>(_prgRom, _prgRom + _prgSize);
@@ -598,6 +595,9 @@ protected:
 		// Expansion audio
 		_audio.reset(new RNBWAudio(_console));
 		_audio->Reset();
+
+		//Override the 2000-2007 registers to catch all writes to the PPU registers (but not their mirrors)
+		_rainbowMemoryHandler.reset(new RainbowMemoryHandler(_console, _audio.get()));
 
 		// CPU cycle IRQ
 
@@ -983,6 +983,7 @@ protected:
 					break;
 				case 0x415B:
 					_cpuCycleIrqPending = false;
+					_cpuCycleIrqEnable = _cpuCycleIrqReset;
 					ClearIrq();
 					break;
 
@@ -1031,6 +1032,7 @@ protected:
 				case 0x41A0: case 0x41A1: case 0x41A2:
 				case 0x41A3: case 0x41A4: case 0x41A5:
 				case 0x41A6: case 0x41A7: case 0x41A8:
+				case 0x41A9:
 					_audio->WriteRegister(addr, value);
 					break;
 

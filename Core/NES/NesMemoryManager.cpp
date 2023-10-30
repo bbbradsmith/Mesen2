@@ -75,6 +75,13 @@ void NesMemoryManager::RegisterIODevice(INesMemoryHandler*handler)
 	InitializeMemoryHandlers(_ramWriteHandlers, handler, ranges.GetRAMWriteAddresses(), ranges.GetAllowOverride());
 }
 
+void NesMemoryManager::RegisterReadHandler(INesMemoryHandler* handler, uint32_t start, uint32_t end)
+{
+	for(uint32_t i = start; i <= end; i++) {
+		_ramReadHandlers[i] = handler;
+	}
+}
+
 void NesMemoryManager::RegisterWriteHandler(INesMemoryHandler* handler, uint32_t start, uint32_t end)
 {
 	for(uint32_t i = start; i <= end; i++) {
