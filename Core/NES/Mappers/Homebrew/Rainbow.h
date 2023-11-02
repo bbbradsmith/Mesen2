@@ -455,41 +455,58 @@ protected:
 	{
 		uint16_t ramOffset = (HasBattery() ? _realSaveRamSize : _realWorkRamSize); // +(_fpgaRamBank & 0x01) * 0x1000;
 		uint16_t chrOffset;
-		ChrMemoryType chrMemoryType = (ChrMemoryType)(_chrChip + 1);
-		MemoryAccessType chrMemoryAccessType = chrMemoryType == ChrMemoryType::ChrRom ? MemoryAccessType::Read : MemoryAccessType::ReadWrite;
+		ChrMemoryType chrMemoryType = _chrChip == CHR_CHIP_ROM ? ChrMemoryType::ChrRom : ChrMemoryType::ChrRam;
+		MemoryAccessType chrMemoryAccessType = _chrChip == CHR_CHIP_ROM ? MemoryAccessType::Read : MemoryAccessType::ReadWrite;
 
 		// CHR data
 		switch(_chrMode) {
 
 			case CHR_MODE_0:	// 8K
 				chrOffset = 0x2000;
-				SetPpuMemoryMapping(0x0000, 0x1FFF, chrMemoryType, (_chr[0] & 0x03FF) * chrOffset, chrMemoryAccessType);
+				if(_chrChip == CHR_CHIP_FPGA_RAM)
+					SetPpuMemoryMapping(0x0000, 0x1FFF, _fpgaRam, 0x0000, chrOffset, MemoryAccessType::ReadWrite);
+				else
+					SetPpuMemoryMapping(0x0000, 0x1FFF, chrMemoryType, (_chr[0] & 0x03FF) * chrOffset, chrMemoryAccessType);
 				break;
 
 			case CHR_MODE_1:	// 4K
 				chrOffset = 0x1000;
-				SetPpuMemoryMapping(0x0000, 0x0FFF, chrMemoryType, (_chr[0] & 0x07FF) * chrOffset, chrMemoryAccessType);
-				SetPpuMemoryMapping(0x1000, 0x1FFF, chrMemoryType, (_chr[1] & 0x07FF) * chrOffset, chrMemoryAccessType);
+				if(_chrChip == CHR_CHIP_FPGA_RAM) {
+					SetPpuMemoryMapping(0x0000, 0x0FFF, _fpgaRam, (_chr[0] & 0x0001) * chrOffset, chrOffset, MemoryAccessType::ReadWrite);
+					SetPpuMemoryMapping(0x1000, 0x1FFF, _fpgaRam, (_chr[1] & 0x0001) * chrOffset, chrOffset, MemoryAccessType::ReadWrite);
+				} else {
+					SetPpuMemoryMapping(0x0000, 0x0FFF, chrMemoryType, (_chr[0] & 0x07FF) * chrOffset, chrMemoryAccessType);
+					SetPpuMemoryMapping(0x1000, 0x1FFF, chrMemoryType, (_chr[1] & 0x07FF) * chrOffset, chrMemoryAccessType);
+				}
 				break;
 
 			case CHR_MODE_2:	// 2K
 				chrOffset = 0x0800;
 				for(uint8_t i = 0; i < 4; i++) {
-					SetPpuMemoryMapping(0x800 * i, 0x800 * i + 0x7FF, chrMemoryType, (_chr[i] & 0x0FFF) * chrOffset, chrMemoryAccessType);
+					if(_chrChip == CHR_CHIP_FPGA_RAM)
+						SetPpuMemoryMapping(0x800 * i, 0x800 * i + 0x7FF, _fpgaRam, (_chr[i] & 0x0003) * chrOffset, chrOffset, MemoryAccessType::ReadWrite);
+					else
+						SetPpuMemoryMapping(0x800 * i, 0x800 * i + 0x7FF, chrMemoryType, (_chr[i] & 0x0FFF) * chrOffset, chrMemoryAccessType);
 				}
 				break;
 
 			case CHR_MODE_3:	// 1K
 				chrOffset = 0x0400;
 				for(uint8_t i = 0; i < 8; i++) {
-					SetPpuMemoryMapping(0x400 * i, 0x400 * i + 0x3FF, chrMemoryType, (_chr[i] & 0x1FFF) * chrOffset, chrMemoryAccessType);
+					if(_chrChip == CHR_CHIP_FPGA_RAM)
+						SetPpuMemoryMapping(0x400 * i, 0x400 * i + 0x3FF, _fpgaRam, (_chr[i] & 0x0007) * chrOffset, chrOffset, MemoryAccessType::ReadWrite);
+					else
+						SetPpuMemoryMapping(0x400 * i, 0x400 * i + 0x3FF, chrMemoryType, (_chr[i] & 0x1FFF) * chrOffset, chrMemoryAccessType);
 				}
 				break;
 
 			case CHR_MODE_4:	// 512B
 				chrOffset = 0x0200;
 				for(uint8_t i = 0; i < 16; i++) {
-					SetPpuMemoryMapping(0x200 * i, 0x200 * i + 0x1FF, chrMemoryType, (_chr[i] & 0x3FFF) * chrOffset, chrMemoryAccessType);
+					if(_chrChip == CHR_CHIP_FPGA_RAM)
+						SetPpuMemoryMapping(0x200 * i, 0x200 * i + 0x1FF, _fpgaRam, (_chr[i] & 0x000F) * chrOffset, chrOffset, MemoryAccessType::ReadWrite);
+					else
+						SetPpuMemoryMapping(0x200 * i, 0x200 * i + 0x1FF, chrMemoryType, (_chr[i] & 0x3FFF) * chrOffset, chrMemoryAccessType);
 				}
 				break;
 		}
@@ -628,7 +645,7 @@ protected:
 				_fpgaFlash[0x2000 + i] = romData.RawData.at(romData.RawData.size() - 0x3000 + i);
 			}
 			// FPGA Ram
-			for(size_t i = 0; i < 0xE00; i++) {
+			for(size_t i = 0; i < 0x0E00; i++) {
 				_fpgaRam[0x1000 + i] = romData.RawData.at(romData.RawData.size() - 0x4000 + i);
 			}
 			_bootrom = true;
@@ -784,52 +801,157 @@ protected:
 
 	uint8_t ReadRegister(uint16_t addr) override
 	{
-		switch(addr) {
-			case 0x4100: return (_prgRamMode << 6) | _prgRomMode;
-			case 0x4120: return (_chrChip << 6) | (_chrSprExtMode << 5) | (_windowModeEnabled << 4) | _chrMode;
-			case 0x4151:
-			{
-				uint8_t rv = (_scanlineIrqHblank ? 0x80 : 0) | (_scanlineIrqInFrame ? 0x40 : 0 | (_scanlineIrqPending ? 0x01 : 0));
-				_scanlineIrqPending = false;
-				_scanlineIrqPendingLast = false;
-				ClearIrq();
-				return rv;
+		uint32_t flashAddr = addr;
+		uint8_t prgIdx;
+		uint8_t t_prgRomMode = _bootrom ? PRG_ROM_MODE_3 : _prgRomMode;
+
+		if(addr >= 0x4100 && addr <= 0x47FF) {	// MAPPER REGISTERS
+			switch(addr) {
+				case 0x4100: return (_prgRamMode << 6) | _prgRomMode;
+				case 0x4120: return (_chrChip << 6) | (_chrSprExtMode << 5) | (_windowModeEnabled << 4) | _chrMode;
+				case 0x4151:
+				{
+					uint8_t rv = (_scanlineIrqHblank ? 0x80 : 0) | (_scanlineIrqInFrame ? 0x40 : 0 | (_scanlineIrqPending ? 0x01 : 0));
+					_scanlineIrqPending = false;
+					_scanlineIrqPendingLast = false;
+					ClearIrq();
+					return rv;
+				}
+				case 0x4154: return _scanlineIrqJitterCounter;
+				case 0x4160: return MAPPER_VERSION;
+				case 0x4161: return (_scanlineIrqPending ? 0x80 : 0) | (_cpuCycleIrqPending ? 0x40 : 0) | ((_espIrqEnable && _espHasReceivedMessage) ? 0x01 : 0x00);
+					// ESP - WiFi
+				case 0x4190:
+				{
+					uint8_t espEnableFlag = _espEnable ? 0x01 : 0x00;
+					uint8_t espIrqEnableFlag = _espIrqEnable ? 0x02 : 0x00;
+					//UDBG("RAINBOW read flags %04x => %02xs\n", A, espEnableFlag | espIrqEnableFlag);
+					MessageManager::Log("[Rainbow] read flags " + HexUtilities::ToHex(addr) + " => " + HexUtilities::ToHex(espEnableFlag | espIrqEnableFlag));
+					return espEnableFlag | espIrqEnableFlag;
+				}
+				case 0x4191:
+				{
+					uint8_t espMessageReceivedFlag = EspMessageReceived() ? 0x80 : 0;
+					uint8_t espRtsFlag = _esp->getDataReadyIO() ? 0x40 : 0x00;
+					return espMessageReceivedFlag | espRtsFlag;
+				}
+				case 0x4192: return _espMessageSent ? 0x80 : 0;
+				case 0x4195:
+				{
+					uint8_t retval = _fpgaRam[0x1800 + (_espRxAddress << 8) + _espRxIndex];
+					_espRxIndex++;
+					return retval;
+				}
 			}
-			case 0x4154: return _scanlineIrqJitterCounter;
-			case 0x4160: return MAPPER_VERSION;
-			case 0x4161: return (_scanlineIrqPending ? 0x80 : 0) | (_cpuCycleIrqPending ? 0x40 : 0) | (_espIrqPending ? 0x01 : 0);
-				// ESP - WiFi
-			case 0x4190:
-			{
-				uint8_t espEnableFlag = _espEnable ? 0x01 : 0x00;
-				uint8_t espIrqEnableFlag = _espIrqEnable ? 0x02 : 0x00;
-				//UDBG("RAINBOW read flags %04x => %02xs\n", A, espEnableFlag | espIrqEnableFlag);
-				MessageManager::Log("[Rainbow] read flags " + HexUtilities::ToHex(addr) + " => " + HexUtilities::ToHex(espEnableFlag | espIrqEnableFlag));
-				return espEnableFlag | espIrqEnableFlag;
+		} else if(addr >= 0x4800 && addr <= 0x5FFF) {	// FPGA-RAM Reads
+			return InternalReadRam(addr); // FPGA-RAM
+		} else if(addr >= 0x6000 && addr <= 0x7FFF) {	// PRG-RAM Reads, could be PRG-ROM, PRG-RAM, FPGA-RAM, we need to check
+			switch(_prgRamMode) {
+				case PRG_RAM_MODE_0:
+					// 8K
+					if(((_prg[1] & 0x8000) >> 14) != 0)
+						return InternalReadRam(addr); // FPGA-RAM or WRAM
+
+					// PRG-ROM
+					flashAddr &= 0x1FFF;
+					flashAddr |= (_prg[1] & 0x7FFF) << 13;
+
+					break;
+				case PRG_RAM_MODE_1:
+					// 2 x 4K
+					prgIdx = ((addr >> 12) & 0x07) - 6;
+					if(((_prg[prgIdx] & 0x8000) >> 14) != 0)
+						return InternalReadRam(addr); // FPGA-RAM or WRAM
+
+					// PRG-ROM
+					flashAddr &= 0x1FFF;
+					flashAddr |= (_prg[prgIdx] & 0x7FFF) << 13;
+
+					break;
 			}
-			case 0x4191:
-			{
-				uint8_t espMessageReceivedFlag = EspMessageReceived() ? 0x80 : 0;
-				uint8_t espRtsFlag = _esp->getDataReadyIO() ? 0x40 : 0x00;
-				return espMessageReceivedFlag | espRtsFlag;
-			}
-			case 0x4192: return _espMessageSent ? 0x80 : 0;
-			case 0x4195:
-			{
-				uint8_t retval = _fpgaRam[0x1800 + (_espRxAddress << 8) + _espRxIndex];
-				_espRxIndex++;
-				return retval;
-			}
-			case 0xFFFA:
-			case 0xFFFB:
+		} else if(addr >= 0x8000 && addr <= 0xFFFF) {	// PRG-ROM Reads, could be PRG-ROM, PRG-RAM, FPGA-RAM, we need to check
+			if(addr == 0xFFFA || addr == 0xFFFB) {
 				_ppuInFrame = false;
 				_lastPpuReadAddr = 0;
 				_scanlineIrqCounter = 0;
 				_scanlineIrqPending = false;
 				ClearIrq();
-				return DebugReadRam(addr);
+				//return DebugReadRam(addr);
+			}
+
+			switch(t_prgRomMode) {
+				case PRG_ROM_MODE_0:
+					// 32K
+					if((_prg[3] >> 14) != 0)
+						return InternalReadRam(addr); // WRAM
+
+					// PRG-ROM
+					flashAddr &= 0x7FFF;
+					flashAddr |= (_prg[3] & 0x7FFF) << 15;
+
+					break;
+				case PRG_ROM_MODE_1:
+					// 2 x 16K
+					prgIdx = ((addr >> 12) & 0x04) + 3;
+					if((_prg[prgIdx] >> 14) != 0)
+						return InternalReadRam(addr); // WRAM
+
+					// PRG-ROM
+					flashAddr &= 0x3FFF;
+					flashAddr |= (_prg[prgIdx] & 0x7FFF) << 14;
+
+					break;
+				case PRG_ROM_MODE_2:
+					if(addr >= 0x8000 && addr <= 0xBFFF) {
+						// 16K
+						if((_prg[3] >> 14) != 0)
+							return InternalReadRam(addr); // WRAM
+
+						// PRG-ROM
+						flashAddr &= 0x3FFF;
+						flashAddr |= (_prg[3] & 0x3F) << 14;
+					} else if(addr >= 0xC000 && addr <= 0xFFFF) {
+						// 2 x 8K
+						prgIdx = ((addr >> 12) & 0x06) + 3;
+						if((_prg[prgIdx] >> 14) != 0)
+							return InternalReadRam(addr); // WRAM
+
+						// PRG-ROM
+						flashAddr &= 0x1FFF;
+						flashAddr |= (_prg[prgIdx] & 0x7FFF) << 13;
+
+					}
+					break;
+				case PRG_ROM_MODE_3:
+					// 4 x 8K
+					prgIdx = ((addr >> 12) & 0x06) + 3;
+					if((_prg[prgIdx] >> 14) != 0 || (_bootrom && prgIdx >= 9))
+						return InternalReadRam(addr); // WRAM
+
+					// PRG-ROM
+					flashAddr &= 0x1FFF;
+					flashAddr |= (_prg[prgIdx] & 0x7FFF) << 13;
+
+					break;
+				case PRG_ROM_MODE_4:
+					// 8 x 4K
+					prgIdx = ((addr >> 12) & 0x07) + 3;
+
+					if((_prg[prgIdx] >> 14) != 0)
+						return InternalReadRam(addr); // WRAM
+
+					// PRG-ROM
+					flashAddr &= 0x0FFF;
+					flashAddr |= (_prg[prgIdx] & 0x7FFF) << 13;
+					break;
+
+				default:
+					return InternalReadRam(addr);
+			}
+
 		}
-		int16_t value = _prgFlash->Read(addr);
+
+		int16_t value = _prgFlash->Read(flashAddr);
 		if(value >= 0) {
 			return (uint8_t)value;
 		}
