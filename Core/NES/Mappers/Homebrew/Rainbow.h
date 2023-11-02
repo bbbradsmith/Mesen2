@@ -120,7 +120,6 @@ private:
 	BrokeStudioFirmware* _esp = NULL;
 	bool _espEnable;
 	bool _espIrqEnable;
-	bool _espIrqPending;
 	bool _espHasReceivedMessage;
 	bool _espMessageSent;
 	uint8_t _espRxAddress, _espTxAddress, _espRxIndex;
@@ -269,7 +268,6 @@ protected:
 		_espRxAddress = 0;
 		_espTxAddress = 0;
 		_espRxIndex = 0;
-		_espIrqPending = 0;
 
 		//_scanlineIrqEnable = _scanlineIrqPending = false;
 		//_cpuCycleIrqEnable = _cpuCycleIrqPending = _cpuCycleIrqReset = false;
@@ -528,7 +526,7 @@ protected:
 		// CPU cycle IRQ
 		if(_cpuCycleIrqEnable) {
 			_cpuCycleIrqCount--;
-			if(_cpuCycleIrqCount < 0) {
+			if(_cpuCycleIrqCount == 0) {
 				_cpuCycleIrqCount = _cpuCycleIrqLatch;
 				_cpuCycleIrqPending = true;
 				TriggerIrq();
@@ -706,7 +704,6 @@ protected:
 		//BrokeStudioFirmware* _esp = NULL; ??
 		SV(_espEnable);
 		SV(_espIrqEnable);
-		SV(_espIrqPending);
 		SV(_espHasReceivedMessage);
 		SV(_espMessageSent);
 		SV(_espRxAddress); SV(_espTxAddress); SV(_espRxIndex);
