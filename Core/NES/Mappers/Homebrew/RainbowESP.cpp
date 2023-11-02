@@ -104,22 +104,9 @@ BrokeStudioFirmware::BrokeStudioFirmware()
 
 	free(value);
 
-	/*
-		char const* hostname = ::getenv("RAINBOW_SERVER_ADDR");
-		if(hostname == nullptr) hostname = "";
-		this->server_settings_address = hostname;
-		this->default_server_settings_address = hostname;
-
-		char const* port_cstr = ::getenv("RAINBOW_SERVER_PORT");
-		if(port_cstr == nullptr) port_cstr = "0";
-		std::istringstream port_iss(port_cstr);
-		port_iss >> this->server_settings_port;
-		this->default_server_settings_port = this->server_settings_port;
-	*/
-
 	// Init fake registered networks
 	this->networks = { {
-		{"FCEUX_SSID", "FCEUX_PASS", true},
+		{"EMULATOR_SSID", "EMULATOR_PASS", true},
 		{"", "", false},
 		{"", "", false},
 	} };
@@ -137,9 +124,7 @@ BrokeStudioFirmware::BrokeStudioFirmware()
 BrokeStudioFirmware::~BrokeStudioFirmware()
 {
 	UDBG("[Rainbow] BrokeStudioFirmware destructor");
-
 	this->closeConnection();
-
 	this->cleanupDownload();
 }
 
@@ -271,7 +256,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 			break;
 		case toesp_cmds_t::ESP_GET_FIRMWARE_VERSION:
 			UDBG("[Rainbow] ESP received command ESP_GET_FIRMWARE_VERSION");
-			this->tx_messages.push_back({ 16, static_cast<uint8_t>(fromesp_cmds_t::ESP_FIRMWARE_VERSION), 14, 'F', 'C', 'E', 'U', 'X', '_', 'F', 'I', 'R', 'M', 'W', 'A', 'R', 'E' });
+			this->tx_messages.push_back({ 19, static_cast<uint8_t>(fromesp_cmds_t::ESP_FIRMWARE_VERSION), 17, 'E', 'M', 'U', 'L', 'A', 'T', 'O', 'R', '_', 'F', 'I', 'R', 'M', 'W', 'A', 'R', 'E' });
 			break;
 
 		case toesp_cmds_t::ESP_FACTORY_SETTINGS:
@@ -295,7 +280,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 		case toesp_cmds_t::WIFI_GET_SSID:
 			UDBG("[Rainbow] ESP received command WIFI_GET_SSID");
 			if((this->wifi_config & static_cast<uint8_t>(wifi_config_t::WIFI_ENABLE)) == static_cast<uint8_t>(wifi_config_t::WIFI_ENABLE)) {
-				this->tx_messages.push_back({ 12, static_cast<uint8_t>(fromesp_cmds_t::SSID), 10, 'F', 'C', 'E', 'U', 'X', '_', 'S', 'S', 'I', 'D' });
+				this->tx_messages.push_back({ 15, static_cast<uint8_t>(fromesp_cmds_t::SSID), 13, 'E', 'M', 'U', 'L', 'A', 'T', 'O', 'R', '_', 'S', 'S', 'I', 'D' });
 			} else {
 				this->tx_messages.push_back({ 2, static_cast<uint8_t>(fromesp_cmds_t::SSID), 0 });
 			}
@@ -322,7 +307,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 		case toesp_cmds_t::AP_GET_SSID:
 			UDBG("[Rainbow] ESP received command AP_GET_SSID");
 			if((this->wifi_config & static_cast<uint8_t>(wifi_config_t::AP_ENABLE)) == static_cast<uint8_t>(wifi_config_t::AP_ENABLE)) {
-				this->tx_messages.push_back({ 15, static_cast<uint8_t>(fromesp_cmds_t::SSID), 13, 'F', 'C', 'E', 'U', 'X', '_', 'A', 'P', '_', 'S', 'S', 'I', 'D' });
+				this->tx_messages.push_back({ 18, static_cast<uint8_t>(fromesp_cmds_t::SSID), 16, 'E', 'M', 'U', 'L', 'A', 'T', 'O', 'R', '_', 'A', 'P', '_', 'S', 'S', 'I', 'D' });
 			} else {
 				this->tx_messages.push_back({ 2, static_cast<uint8_t>(fromesp_cmds_t::SSID), 0 });
 			}
@@ -442,10 +427,14 @@ void BrokeStudioFirmware::processBufferedMessage()
 		{
 			UDBG("[Rainbow] ESP received command SERVER_SET_PROTOCOL");
 			if(message_size == 2) {
-				server_protocol_t const requested_protocol = static_cast<server_protocol_t>(this->rx_buffer.at(2));
+				server_protocol_t requested_protocol = static_cast<server_protocol_t>(this->rx_buffer.at(2));
 				if(requested_protocol > server_protocol_t::UDP) {
 					UDBG("[Rainbow] SET_SERVER_PROTOCOL: unknown protocol (" + std::to_string(static_cast<unsigned int>(requested_protocol)) + ")");
 				} else {
+					if(requested_protocol == server_protocol_t::TCP_SECURED) {
+						UDBG("[Rainbow] SET_SERVER_PROTOCOL: protocol TCP_SECURED not supported, falling back to TCP");
+						requested_protocol = server_protocol_t::TCP;
+					}
 					this->active_protocol = requested_protocol;
 				}
 			}
@@ -571,14 +560,14 @@ void BrokeStudioFirmware::processBufferedMessage()
 				uint8_t networkItem = this->rx_buffer.at(2);
 				if(networkItem > NUM_FAKE_NETWORKS - 1) networkItem = NUM_FAKE_NETWORKS - 1;
 				this->tx_messages.push_back({
-					21,
+					24,
 					static_cast<uint8_t>(fromesp_cmds_t::NETWORK_SCANNED_DETAILS),
 					4, // encryption type
 					0x47, // RSSI
 					0x00,0x00,0x00,0x01, // channel
 					0, // hidden?
-					12, // SSID length
-					'F','C','E','U','X','_','S','S','I','D','_',static_cast<uint8_t>(networkItem + '0') // SSID
+					15, // SSID length
+					'E', 'M', 'U', 'L', 'A', 'T', 'O', 'R', '_','S','S','I','D','_',static_cast<uint8_t>(networkItem + '0') // SSID
 				});
 			}
 			break;
@@ -877,7 +866,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 		case toesp_cmds_t::FILE_APPEND:
 			UDBG("[Rainbow] ESP received command FILE_APPEND");
 			if(message_size >= 3 && this->working_file.active) {
-				UDBG("[Rainbow] FILE_APPEND not implemented");
+				UDBG("[Rainbow] ESP command FILE_APPEND not implemented");
 				//this->appendFile(this->rx_buffer.begin() + 2, this->rx_buffer.begin() + message_size + 1);
 			}
 			break;
@@ -919,7 +908,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 				}
 			} else {
 				//TODO manual mode
-				UDBG("[Rainbow] FILE_COUNT manual mode not implemented");
+				UDBG("[Rainbow] ESP command FILE_COUNT manual mode not implemented");
 			}
 
 			break;
@@ -980,7 +969,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 				}
 			} else {
 				//TODO manual mode
-				UDBG("[Rainbow] FILE_GET_LIST manual mode not implemented");
+				UDBG("[Rainbow] ESP command FILE_GET_LIST manual mode not implemented");
 				this->tx_messages.push_back({
 					2,
 					static_cast<uint8_t>(fromesp_cmds_t::FILE_LIST),
@@ -1174,7 +1163,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 				}
 			} else {
 				//TODO manual mode
-				UDBG("[Rainbow] FILE_GET_INFO manual mode not implemented");
+				UDBG("[Rainbow] ESP command FILE_GET_INFO manual mode not implemented");
 			}
 
 			break;
@@ -1226,7 +1215,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 				}
 			} else {
 				//TODO manual mode
-				UDBG("[Rainbow] FILE_DOWNLOAD manual mode not implemented");
+				UDBG("[Rainbow] ESP command FILE_DOWNLOAD manual mode not implemented");
 			}
 			break;
 		}
