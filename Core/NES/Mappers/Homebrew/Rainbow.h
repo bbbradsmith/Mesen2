@@ -240,26 +240,31 @@ protected:
 		_ntBank[1] = 0;
 		_ntBank[2] = 1;
 		_ntBank[3] = 1;
+		_ntBank[4] = 0;
 		_ntControl[0] = 0;
 		_ntControl[1] = 0;
 		_ntControl[2] = 0;
 		_ntControl[3] = 0;
+		_ntControl[4] = 0x80;
 
 		// Scanline IRQ
 		_scanlineIrqEnable = false;
+		_scanlineIrqOffset = 135;
 		_scanlineIrqPending = false;
 		_scanlineIrqPendingLast = false;
 		_scanlineIrqInFrame = false;
 		_scanlineIrqHblank = false;
-		_scanlineIrqOffset = 135;
 
 		// CPU Cycle IRQ
-		_cpuCycleIrqEnable = false;
 		_cpuCycleIrqPending = false;
+		_cpuCycleIrqEnable = false;
 		_cpuCycleIrqReset = false;
 
 		// Audio Output
-		_audioOutput = 1;
+		_audioOutput = 3;
+
+		// Window Split
+		_windowModeEnabled = false;
 
 		// ESP / WiFi
 		_espEnable = false;
@@ -269,9 +274,6 @@ protected:
 		_espTxAddress = 0;
 		_espRxIndex = 0;
 
-		//_scanlineIrqEnable = _scanlineIrqPending = false;
-		//_cpuCycleIrqEnable = _cpuCycleIrqPending = _cpuCycleIrqReset = false;
-		//_espIrqPending = false;
 		UpdatePrgBanks();
 		UpdateChrBanks();
 	}
