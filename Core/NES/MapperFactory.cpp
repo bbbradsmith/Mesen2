@@ -274,14 +274,14 @@
 #include "NES/Mappers/Whirlwind/Mapper40.h"
 #include "NES/Mappers/Whirlwind/Smb2j.h"
 
-BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
+BaseMapper* MapperFactory::GetMapperFromID(RomData& romData)
 {
 	switch(romData.Info.MapperID) {
 		case 0: return new NROM();
 		case 1: return new MMC1();
 		case 2: return new UNROM();
 		case 3: return new CNROM(false);
-		case 4: 
+		case 4:
 			if(romData.Info.SubMapperID == 3) {
 				return new McAcc();
 			} else {
@@ -315,7 +315,7 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 31: return new NsfCart31();
 		case 32: return new IremG101();
 		case 33: return new TaitoTc0190();
-		case 34: 
+		case 34:
 			switch(romData.Info.SubMapperID) {
 				case 0: return (romData.ChrRom.size() > 0) ? (BaseMapper*)new Nina01() : (BaseMapper*)new BnRom(); //BnROM uses CHR RAM (so no CHR rom in the .NES file)
 				case 1: return new Nina01();
@@ -528,13 +528,13 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 264: return new Yoko();
 		case 265: return new T262();
 		case 266: return new CityFighter();
-		//267
+			//267
 		case 268: return new MMC3_Coolboy();
-		//269-270
+			//269-270
 		case 271: break; //22026
-		//272-273
+			//272-273
 		case 274: return new Bmc80013B();
-		//275-282
+			//275-282
 		case 283: return new Gs2004();
 		case 284: return new UnlDripGame();
 		case 285: return new A65AS();
@@ -543,11 +543,11 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 288: return new Gkcx1();
 		case 289: return new Bmc60311C();
 		case 290: return new BmcNtd03();
-		//291
+			//291
 		case 292: return new DragonFighter();
-		//293-294
+			//293-294
 		case 295: break; //13IN1JY110
-		//296-297
+			//296-297
 		case 298: return new Tf1201();
 		case 299: return new Bmc11160();
 		case 300: return new Bmc190in1();
@@ -558,17 +558,17 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 305: return new Kaiser7031();
 		case 306: return new Kaiser7016();
 		case 307: return new Kaiser7037();
-		//case 308: break; //TH2131-1
+			//case 308: break; //TH2131-1
 		case 309: return new Lh51();
-		//310-311
+			//310-311
 		case 312: return new Kaiser7013B();
 		case 313: return new ResetTxrom();
 		case 314: return new Bmc64in1NoRepeat();
 		case 315: break; //830134C
-		//316-318
+			//316-318
 		case 319: return new Hp898f();
 		case 320: return new Bmc830425C4391T();
-		//321
+			//321
 		case 322: break; //K-3033
 		case 323: return new FaridSlrom();
 		case 324: return new FaridUnrom();
@@ -576,11 +576,11 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 327: break; //10-24-C-A1
 		case 328: return new Rt01();
 		case 329: return new Edu2000();
-		//330
+			//330
 		case 331: return new Bmc12in1();
 		case 332: return new Super40in1Ws();
 		case 333: return new Bmc8in1(); // + NEWSTAR-GRM070-8IN1
-		//334
+			//334
 		case 335: break; //CTC-09
 		case 336: return new BmcK3046();
 		case 337: break; //CTC-12IN1
@@ -589,11 +589,11 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 340: break; //K-3036
 		case 341: break; //TJ-03
 		case 342: break; //COOLGIRL
-		//343
+			//343
 		case 344: break; //GN26
 		case 345: break; //L6IN1
 		case 346: return new Kaiser7012();
-		//347
+			//347
 		case 348: return new Bmc830118C();
 		case 349: return new BmcG146();
 		case 350: break; //891227
@@ -601,13 +601,13 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 366: return new BmcGn45();
 
 		case 513: return new Sachen9602();
-		//514-517
+			//514-517
 		case 518: return new Dance2000();
 		case 519: return new Eh8813A();
-		//520
+			//520
 		case 521: return new DreamTech01();
 		case 522: return new Lh10();
-		//523
+			//523
 		case 524: break; //900218
 		case 525: break; //KS7021A
 		case 526: break; //BJ56
@@ -616,7 +616,7 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 		case 529: return new T230();
 		case 530: return new Ax5705();
 
-		case 682: return new RNBW();
+		case 682: return new Rainbow();
 
 		case UnifBoards::Ac08: return new Ac08(); //mapper 42?
 		case UnifBoards::Cc21: return new Cc21();
@@ -640,7 +640,7 @@ BaseMapper* MapperFactory::GetMapperFromID(RomData &romData)
 	return nullptr;
 }
 
-unique_ptr<BaseMapper> MapperFactory::InitializeFromFile(NesConsole* console, VirtualFile &romFile, RomData &romData, LoadRomResult& result)
+unique_ptr<BaseMapper> MapperFactory::InitializeFromFile(NesConsole* console, VirtualFile& romFile, RomData& romData, LoadRomResult& result)
 {
 	romData = {};
 	bool databaseEnabled = !console->GetNesConfig().DisableGameDatabase;

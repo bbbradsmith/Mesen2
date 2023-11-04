@@ -2,7 +2,7 @@
 #include "pch.h"
 #include "Utilities/Serializer.h"
 
-class RNBWPulse : public ISerializable
+class RainbowPulse : public ISerializable
 {
 private:
 	uint8_t _volume = 0;

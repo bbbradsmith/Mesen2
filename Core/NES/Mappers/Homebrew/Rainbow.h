@@ -53,7 +53,7 @@
 #define NT_FPGA_RAM			0b10
 #define NT_CHR_ROM			0b11
 
-class RNBW : public BaseMapper
+class Rainbow : public BaseMapper
 {
 private:
 	unique_ptr<RainbowMemoryHandler> _rainbowMemoryHandler;
@@ -129,7 +129,7 @@ private:
 	size_t _miscRomSize = 0;
 
 	// AUDIO EXPANSION
-	unique_ptr<RNBWAudio> _audio;
+	unique_ptr<RainbowAudio> _audio;
 
 	// SCANLINE IRQ
 	bool _scanlineIrqEnable;
@@ -184,8 +184,8 @@ protected:
 		_realSaveRamSize = size;
 		if(HasBattery()) {
 			//If there's a battery on the board, FPGA-RAM gets saved, too.
-			size += RNBW::FpgaRamSize;
-			size += RNBW::FpgaFlashSize;
+			size += Rainbow::FpgaRamSize;
+			size += Rainbow::FpgaFlashSize;
 		}
 
 		return size;
@@ -204,8 +204,8 @@ protected:
 		}
 		_realWorkRamSize = size;
 		if(!HasBattery()) {
-			size += RNBW::FpgaRamSize;
-			size += RNBW::FpgaFlashSize;
+			size += Rainbow::FpgaRamSize;
+			size += Rainbow::FpgaFlashSize;
 		}
 
 		return size;
@@ -453,7 +453,6 @@ protected:
 
 	void UpdateChrBanks()
 	{
-		uint16_t ramOffset = (HasBattery() ? _realSaveRamSize : _realWorkRamSize); // +(_fpgaRamBank & 0x01) * 0x1000;
 		uint16_t chrOffset;
 		ChrMemoryType chrMemoryType = _chrChip == CHR_CHIP_ROM ? ChrMemoryType::ChrRom : ChrMemoryType::ChrRam;
 		MemoryAccessType chrMemoryAccessType = _chrChip == CHR_CHIP_ROM ? MemoryAccessType::Read : MemoryAccessType::ReadWrite;
@@ -528,7 +527,7 @@ protected:
 					SetPpuMemoryMapping(startAddr, endAddr, ChrMemoryType::ChrRam, (curNtBank & 0x7F) * 0x400, MemoryAccessType::ReadWrite);
 					break;
 				case NT_FPGA_RAM:
-					SetPpuMemoryMapping(startAddr, endAddr, _fpgaRam, ((curNtBank & 0x03) * 0x400), RNBW::FpgaRamSize, MemoryAccessType::ReadWrite);
+					SetPpuMemoryMapping(startAddr, endAddr, _fpgaRam, ((curNtBank & 0x03) * 0x400), Rainbow::FpgaRamSize, MemoryAccessType::ReadWrite);
 					break;
 				case NT_CHR_ROM:
 					SetPpuMemoryMapping(startAddr, endAddr, ChrMemoryType::ChrRom, (curNtBank & 0x7F) * 0x400, MemoryAccessType::Read);
@@ -610,7 +609,7 @@ protected:
 		_orgChrRom = vector<uint8_t>(_chrRom, _chrRom + _chrRomSize);
 
 		// Expansion audio
-		_audio.reset(new RNBWAudio(_console));
+		_audio.reset(new RainbowAudio(_console));
 		_audio->Reset();
 
 		//Override the 2000-2007 registers to catch all writes to the PPU registers (but not their mirrors)
@@ -1357,8 +1356,6 @@ protected:
 			}
 		}
 
-		uint32_t ppuCycle = _console->GetPpu()->GetCurrentCycle();
-
 		// Sprite Extended Mode
 		if((_dotCounter >= 130) && (_dotCounter < 160) && _chrSprExtMode) {
 			bool largeSprites = (_rainbowMemoryHandler->GetPpuReg(0x2000) & 0x20) != 0;
@@ -1626,7 +1623,7 @@ protected:
 				if(_chrRamSize == 0) return 0;
 				return _chrRam[pos & (_chrRamSize - 1)];
 			case CHR_CHIP_FPGA_RAM:
-				if(FpgaRamSize == 0) return 0;
+				if(Rainbow::FpgaRamSize == 0) return 0;
 				return _fpgaRam[pos & (FpgaRamSize - 1)];
 			default:
 				return 0;

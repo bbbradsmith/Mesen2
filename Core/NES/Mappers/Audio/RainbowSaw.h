@@ -2,7 +2,7 @@
 #include "pch.h"
 #include "Utilities/Serializer.h"
 
-class RNBWSaw : public ISerializable
+class RainbowSaw : public ISerializable
 {
 private:
 	uint8_t _accumulatorRate = 0;

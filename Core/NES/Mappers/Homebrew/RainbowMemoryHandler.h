@@ -6,7 +6,7 @@
 
 class RainbowMemoryHandler : public INesMemoryHandler
 {
-	RNBWAudio* _audio = nullptr;
+	RainbowAudio* _audio = nullptr;
 	NesConsole* _console = nullptr;
 	uint8_t _ppuRegs[8] = {};
 	uint8_t _oamOffset;
@@ -14,7 +14,7 @@ class RainbowMemoryHandler : public INesMemoryHandler
 	uint16_t _oamWrite;
 
 public:
-	RainbowMemoryHandler(NesConsole* console, RNBWAudio* audio)
+	RainbowMemoryHandler(NesConsole* console, RainbowAudio* audio)
 	{
 		_audio = audio;
 		_console = console;

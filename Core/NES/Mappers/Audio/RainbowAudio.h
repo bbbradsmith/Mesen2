@@ -6,12 +6,12 @@
 #include "NES/NesConsole.h"
 #include "Utilities/Serializer.h"
 
-class RNBWAudio : public BaseExpansionAudio
+class RainbowAudio : public BaseExpansionAudio
 {
 private:
-	RNBWPulse _pulse1;
-	RNBWPulse _pulse2;
-	RNBWSaw _saw;
+	RainbowPulse _pulse1;
+	RainbowPulse _pulse2;
+	RainbowSaw _saw;
 	bool _haltAudio = false;
 
 public:
@@ -43,7 +43,7 @@ protected:
 	}
 
 public:
-	RNBWAudio(NesConsole* console) : BaseExpansionAudio(console)
+	RainbowAudio(NesConsole* console) : BaseExpansionAudio(console)
 	{
 		Reset();
 	}
