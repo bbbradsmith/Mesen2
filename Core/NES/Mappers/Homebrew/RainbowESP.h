@@ -4,10 +4,24 @@
 #define CURL_STATICLIB
 //#include "NES/Mappers/Homebrew/cURL/curl.h"
 
+#include <assert.h>
 #include <array>
 #include <atomic>
 #include <deque>
 #include <thread>
+#include <fstream>
+
+using std::pair;
+using std::array;
+using std::vector;
+using std::min;
+using std::max;
+using std::ifstream;
+using std::ofstream;
+using std::string;
+using std::atomic;
+using std::thread;
+using std::deque;
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -37,8 +51,8 @@ static const uint8_t DBG_CFG_NETWORK = 0x04;
 
 struct NetworkInfo
 {
-	std::string ssid;
-	std::string pass;
+	string ssid;
+	string pass;
 	bool active;
 };
 
@@ -51,8 +65,8 @@ struct FileConfig
 struct FileStruct
 {
 	uint8_t drive;
-	std::string filename;
-	std::vector<uint8_t> data;
+	string filename;
+	vector<uint8_t> data;
 };
 
 struct WorkingFile
@@ -263,9 +277,9 @@ private:
 
 	void processBufferedMessage();
 	FileConfig parseFileConfig(uint8_t config);
-	int findFile(uint8_t drive, std::string filename);
-	int findPath(uint8_t drive, std::string path);
-	std::string getAutoFilename(uint8_t path, uint8_t file);
+	int findFile(uint8_t drive, string filename);
+	int findPath(uint8_t drive, string path);
+	string getAutoFilename(uint8_t path, uint8_t file);
 	void readFile(uint8_t n);
 	template<class I>
 	void writeFile(I data_begin, I data_end);
@@ -287,30 +301,30 @@ private:
 	//void pingRequest(uint8_t n);
 	//void receivePingResult();
 
-	std::pair<bool, sockaddr> resolve_server_address();
-	static std::deque<uint8_t> read_socket(int socket);
+	pair<bool, sockaddr> resolve_server_address();
+	static deque<uint8_t> read_socket(int socket);
 
 	void initDownload();
-	//static std::pair<uint8_t, uint8_t> curle_to_net_error(CURLcode curle);
-	void downloadFile(std::string const& url, uint8_t path, uint8_t file);
+	//static pair<uint8_t, uint8_t> curle_to_net_error(CURLcode curle);
+	void downloadFile(string const& url, uint8_t path, uint8_t file);
 	void cleanupDownload();
 
 private:
-	std::deque<uint8_t> rx_buffer;
-	std::deque<uint8_t> tx_buffer;
-	std::deque<std::deque<uint8_t>> tx_messages;
+	deque<uint8_t> rx_buffer;
+	deque<uint8_t> tx_buffer;
+	deque<deque<uint8_t>> tx_messages;
 
 	bool isEspFlashFilePresent = false;
 	bool isSdCardFilePresent = false;
 	WorkingFile working_file;
-	std::vector<FileStruct> files;
+	vector<FileStruct> files;
 
-	std::array<NetworkInfo, NUM_NETWORKS> networks;
+	array<NetworkInfo, NUM_NETWORKS> networks;
 
 	server_protocol_t active_protocol = server_protocol_t::TCP;
-	std::string default_server_settings_address;
+	string default_server_settings_address;
 	uint16_t default_server_settings_port = 0;
-	std::string server_settings_address;
+	string server_settings_address;
 	uint16_t server_settings_port = 0;
 
 	uint8_t debug_config = 0;
@@ -320,8 +334,8 @@ private:
 	uint8_t ping_avg = 0;
 	uint8_t ping_max = 0;
 	uint8_t ping_lost = 0;
-	std::atomic<bool> ping_ready;
-	std::thread ping_thread;
+	atomic<bool> ping_ready;
+	thread ping_thread;
 
 	int udp_socket = -1;
 	sockaddr server_addr;

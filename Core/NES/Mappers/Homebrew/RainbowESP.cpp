@@ -6,17 +6,9 @@
 #include "Utilities/HexUtilities.h"
 #include "Utilities/CRC32.h"
 
-#include <assert.h>
-#include <algorithm>
-#include <chrono>
-#include <cstdlib>
-#include <fstream>
-#include <map>
-#include <regex>
-#include <sstream>
-#include <stdexcept>
-
 #ifdef _WIN32
+
+#define ERR_MSG_SIZE 513
 
 // UDP networking
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
@@ -30,8 +22,6 @@ typedef SSIZE_T ssize_t;
 #define cast_network_payload(x) reinterpret_cast<char*>(x)
 #define close_sock(x) closesocket(x)
 
-#define ERR_MSG_SIZE 513
-
 #else
 
 // UDP networking
@@ -44,10 +34,6 @@ typedef SSIZE_T ssize_t;
 // Compatibility hacks
 #define cast_network_payload(x) reinterpret_cast<void*>(x)
 #define close_sock(x) ::close(x)
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
 
 #endif
 
@@ -165,7 +151,7 @@ uint8_t BrokeStudioFirmware::tx()
 
 	// Fill buffer with the next message (if needed)
 	if(this->tx_buffer.empty() && !this->tx_messages.empty()) {
-		std::deque<uint8_t> message = this->tx_messages.front();
+		deque<uint8_t> message = this->tx_messages.front();
 		this->tx_buffer.insert(this->tx_buffer.end(), message.begin(), message.end());
 		this->tx_messages.pop_front();
 	}
@@ -192,7 +178,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 	assert(this->rx_buffer.size() >= 2); // Buffer must contain exactly one message, minimal message is two bytes (length + type)
 	uint8_t const message_size = this->rx_buffer.front();
 	assert(message_size >= 1); // minimal payload is one byte (type)
-	assert(this->rx_buffer.size() == static_cast<std::deque<uint8_t>::size_type>(message_size) + 1); // Buffer size must match declared payload size
+	assert(this->rx_buffer.size() == static_cast<deque<uint8_t>::size_type>(message_size) + 1); // Buffer size must match declared payload size
 
 	// Process the message in RX buffer
 	switch(static_cast<toesp_cmds_t>(this->rx_buffer.at(1))) {
@@ -228,7 +214,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 			string dbgMessage = "[Rainbow] Data: ";
 			static bool isRainbowDebugEnabled = RAINBOW_DEBUG_ESP > 0;
 			if(isRainbowDebugEnabled || (this->debug_config & 1)) {
-				for(std::deque<uint8_t>::const_iterator cur = this->rx_buffer.begin() + 2; cur < this->rx_buffer.end(); ++cur) {
+				for(deque<uint8_t>::const_iterator cur = this->rx_buffer.begin() + 2; cur < this->rx_buffer.end(); ++cur) {
 					dbgMessage += HexUtilities::ToHex(*cur) + " ";
 				}
 				UDBG(dbgMessage);
@@ -251,7 +237,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 
 				size_t i = 0;
 				for(
-					std::deque<std::deque<uint8_t>>::iterator message = this->tx_messages.end();
+					deque<deque<uint8_t>>::iterator message = this->tx_messages.end();
 					message != this->tx_messages.begin();
 				) {
 					--message;
@@ -434,7 +420,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 					if(n == 0) {
 						n = 4;
 					}
-					//this->ping_thread = std::thread(&BrokeStudioFirmware::pingRequest, this, n); // TODO: add ping support
+					//this->ping_thread = thread(&BrokeStudioFirmware::pingRequest, this, n); // TODO: add ping support
 				}
 			}
 			break;
@@ -464,7 +450,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 					static_cast<uint8_t>(fromesp_cmds_t::SERVER_SETTINGS)
 				});
 			} else {
-				std::deque<uint8_t> message({
+				deque<uint8_t> message({
 					static_cast<uint8_t>(1 + 2 + 1 + this->server_settings_address.size()),
 					static_cast<uint8_t>(fromesp_cmds_t::SERVER_SETTINGS),
 					static_cast<uint8_t>(this->server_settings_port >> 8),
@@ -495,7 +481,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 					static_cast<uint8_t>(fromesp_cmds_t::SERVER_SETTINGS)
 				});
 			} else {
-				std::deque<uint8_t> message({
+				deque<uint8_t> message({
 					static_cast<uint8_t>(1 + 2 + 1 + this->default_server_settings_address.size()),
 					static_cast<uint8_t>(fromesp_cmds_t::SERVER_SETTINGS),
 					static_cast<uint8_t>(this->default_server_settings_port >> 8),
@@ -538,8 +524,8 @@ void BrokeStudioFirmware::processBufferedMessage()
 		{
 			UDBG("[Rainbow] ESP received command SERVER_SEND_MSG");
 			uint8_t const payload_size = static_cast<const uint8_t>(this->rx_buffer.size() - 2);
-			std::deque<uint8_t>::const_iterator payload_begin = this->rx_buffer.begin() + 2;
-			std::deque<uint8_t>::const_iterator payload_end = payload_begin + payload_size;
+			deque<uint8_t>::const_iterator payload_begin = this->rx_buffer.begin() + 2;
+			deque<uint8_t>::const_iterator payload_end = payload_begin + payload_size;
 
 			switch(this->active_protocol) {
 				case server_protocol_t::TCP:
@@ -603,7 +589,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 			if(message_size == 2) {
 				uint8_t networkItem = this->rx_buffer.at(2);
 				if(networkItem > NUM_NETWORKS - 1) networkItem = NUM_NETWORKS - 1;
-				std::deque<uint8_t> message({
+				deque<uint8_t> message({
 					static_cast<uint8_t>(2 + 1 + this->networks[networkItem].ssid.length() + 1 + this->networks[networkItem].pass.length()),
 					static_cast<uint8_t>(fromesp_cmds_t::NETWORK_REGISTERED_DETAILS),
 					static_cast<uint8_t>(this->networks[networkItem].active ? 1 : 0),
@@ -678,7 +664,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 						filename = getAutoFilename(path, file);
 						int i = findFile(file_config.drive, filename);
 						if(i == -1) {
-							FileStruct temp_file = { file_config.drive, filename, std::vector<uint8_t>() };
+							FileStruct temp_file = { file_config.drive, filename, vector<uint8_t>() };
 							this->files.push_back(temp_file);
 						}
 					}
@@ -687,7 +673,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 					filename = string(this->rx_buffer.begin() + 4, this->rx_buffer.begin() + 4 + path_length);
 					int i = findFile(file_config.drive, filename);
 					if(i == -1) {
-						FileStruct temp_file = { file_config.drive, filename, std::vector<uint8_t>() };
+						FileStruct temp_file = { file_config.drive, filename, vector<uint8_t>() };
 						this->files.push_back(temp_file);
 					}
 				}
@@ -728,7 +714,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 				} else if(file_config.access_mode == static_cast<uint8_t>(file_config_flags_t::ACCESS_MODE_MANUAL)) {
 					string filename = this->working_file.file->filename;
 					filename = filename.substr(filename.find_first_of("/") + 1);
-					std::deque<uint8_t> message({
+					deque<uint8_t> message({
 						static_cast<uint8_t>(3 + filename.size()),
 						static_cast<uint8_t>(fromesp_cmds_t::FILE_STATUS),
 						1,
@@ -930,7 +916,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 
 			if(file_config.access_mode == static_cast<uint8_t>(file_config_flags_t::ACCESS_MODE_AUTO)) {
 				if(message_size >= 3) {
-					std::vector<uint8_t> existing_files;
+					vector<uint8_t> existing_files;
 					uint8_t const path = this->rx_buffer.at(3);
 					uint8_t page_size = NUM_FILES;
 					uint8_t current_page = 0;
@@ -965,7 +951,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 						if(nb_files >= page_end) break;
 					}
 
-					std::deque<uint8_t> message({
+					deque<uint8_t> message({
 						static_cast<uint8_t>(existing_files.size() + 2),
 						static_cast<uint8_t>(fromesp_cmds_t::FILE_LIST),
 						static_cast<uint8_t>(existing_files.size())
@@ -1275,19 +1261,19 @@ string BrokeStudioFirmware::getAutoFilename(uint8_t path, uint8_t file)
 void BrokeStudioFirmware::readFile(uint8_t n)
 {
 	// Get data range
-	std::vector<uint8_t>::const_iterator data_begin;
-	std::vector<uint8_t>::const_iterator data_end;
+	vector<uint8_t>::const_iterator data_begin;
+	vector<uint8_t>::const_iterator data_end;
 	if(this->working_file.offset >= this->working_file.file->data.size()) {
 		data_begin = this->working_file.file->data.end();
 		data_end = data_begin;
 	} else {
 		data_begin = this->working_file.file->data.begin() + this->working_file.offset;
-		data_end = this->working_file.file->data.begin() + min(static_cast<std::vector<uint8_t>::size_type>(this->working_file.offset) + n, this->working_file.file->data.size());
+		data_end = this->working_file.file->data.begin() + min(static_cast<vector<uint8_t>::size_type>(this->working_file.offset) + n, this->working_file.file->data.size());
 	}
-	std::vector<uint8_t>::size_type const data_size = data_end - data_begin;
+	vector<uint8_t>::size_type const data_size = data_end - data_begin;
 
 	// Write response
-	std::deque<uint8_t> message({
+	deque<uint8_t> message({
 		static_cast<uint8_t>(data_size + 2),
 		static_cast<uint8_t>(fromesp_cmds_t::FILE_DATA),
 		static_cast<uint8_t>(data_size)
@@ -1309,7 +1295,7 @@ void BrokeStudioFirmware::writeFile(I data_begin, I data_end)
 		this->working_file.file->data.resize(offset_end, 0);
 	}
 
-	for(std::vector<uint8_t>::size_type i = this->working_file.offset; i < offset_end; ++i) {
+	for(vector<uint8_t>::size_type i = this->working_file.offset; i < offset_end; ++i) {
 		this->working_file.file->data[i] = *data_begin;
 		++data_begin;
 	}
@@ -1355,7 +1341,7 @@ void BrokeStudioFirmware::saveFiles()
 
 void BrokeStudioFirmware::saveFile(uint8_t drive, char const* filename)
 {
-	std::ofstream ofs(filename, std::fstream::binary);
+	ofstream ofs(filename, std::fstream::binary);
 	if(ofs.fail()) {
 		MessageManager::Log("[Rainbow] Couldn't open RAINBOW_FILESYSTEM_FILE (" + string(filename) + ")");
 		return;
@@ -1449,7 +1435,7 @@ void BrokeStudioFirmware::loadFiles()
 
 void BrokeStudioFirmware::loadFile(uint8_t drive, char const* filename)
 {
-	std::ifstream ifs(filename, std::fstream::binary);
+	ifstream ifs(filename, std::fstream::binary);
 	if(ifs.fail()) {
 		MessageManager::Log("[Rainbow] Couldn't open RAINBOW_FILESYSTEM_FILE (" + string(filename) + ")");
 		return;
@@ -1558,7 +1544,7 @@ void BrokeStudioFirmware::sendUdpDatagramToServer(I begin, I end)
 
 	if(this->udp_socket != -1) {
 		size_t message_size = end - begin;
-		std::vector<uint8_t> aggregated;
+		vector<uint8_t> aggregated;
 		aggregated.reserve(message_size);
 		aggregated.insert(aggregated.end(), begin, end);
 
@@ -1597,7 +1583,7 @@ void BrokeStudioFirmware::sendTcpDataToServer(I begin, I end)
 
 	if(this->tcp_socket != -1) {
 		size_t message_size = end - begin;
-		std::vector<uint8_t> aggregated;
+		vector<uint8_t> aggregated;
 		aggregated.reserve(message_size);
 		aggregated.insert(aggregated.end(), begin, end);
 
@@ -1620,7 +1606,7 @@ void BrokeStudioFirmware::sendTcpDataToServer(I begin, I end)
 	}
 }
 
-std::deque<uint8_t> BrokeStudioFirmware::read_socket(int socket)
+deque<uint8_t> BrokeStudioFirmware::read_socket(int socket)
 {
 	fd_set rfds;
 	FD_ZERO(&rfds);
@@ -1642,7 +1628,7 @@ std::deque<uint8_t> BrokeStudioFirmware::read_socket(int socket)
 	} else if(n_readable > 0) {
 		if(FD_ISSET(socket, &rfds)) {
 			size_t const MAX_MSG_SIZE = 254;
-			std::vector<uint8_t> data;
+			vector<uint8_t> data;
 			data.resize(MAX_MSG_SIZE);
 
 			sockaddr_in addr_from;
@@ -1669,7 +1655,7 @@ std::deque<uint8_t> BrokeStudioFirmware::read_socket(int socket)
 				}
 				UDBG(dbgMessage);
 #endif
-				std::deque<uint8_t> message({
+				deque<uint8_t> message({
 					static_cast<uint8_t>(msg_len + 1),
 					static_cast<uint8_t>(fromesp_cmds_t::MESSAGE_FROM_SERVER)
 				});
@@ -1681,14 +1667,14 @@ std::deque<uint8_t> BrokeStudioFirmware::read_socket(int socket)
 			}
 		}
 	}
-	return std::deque<uint8_t>();
+	return deque<uint8_t>();
 }
 
 void BrokeStudioFirmware::receiveDataFromServer()
 {
 	// TCP
 	if(this->tcp_socket != -1) {
-		std::deque<uint8_t> message = read_socket(this->tcp_socket);
+		deque<uint8_t> message = read_socket(this->tcp_socket);
 		if(!message.empty()) {
 			this->tx_messages.push_back(message);
 		}
@@ -1696,7 +1682,7 @@ void BrokeStudioFirmware::receiveDataFromServer()
 
 	// UDP
 	if(this->udp_socket != -1) {
-		std::deque<uint8_t> message = read_socket(this->udp_socket);
+		deque<uint8_t> message = read_socket(this->udp_socket);
 		if(!message.empty()) {
 			this->tx_messages.push_back(message);
 		}
@@ -1880,7 +1866,7 @@ namespace
 {
 	size_t download_write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
 	{
-		std::vector<uint8_t>* data = reinterpret_cast<std::vector<uint8_t>*>(userdata);
+		vector<uint8_t>* data = reinterpret_cast<vector<uint8_t>*>(userdata);
 		data->insert(data->end(), reinterpret_cast<uint8_t*>(ptr), reinterpret_cast<uint8_t*>(ptr + size * nmemb));
 		return size * nmemb;
 	}
@@ -1949,7 +1935,7 @@ void BrokeStudioFirmware::downloadFile(string const& url, uint8_t path, uint8_t 
 	*/
 	/* disable CURL for now
 		// Download file
-		std::vector<uint8_t> data;
+		vector<uint8_t> data;
 		curl_easy_setopt(this->curl_handle, CURLOPT_URL, url.c_str());
 		curl_easy_setopt(this->curl_handle, CURLOPT_WRITEDATA, (void*)&data);
 		CURLcode res = curl_easy_perform(this->curl_handle);
