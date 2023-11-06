@@ -850,16 +850,15 @@ void BrokeStudioFirmware::processBufferedMessage()
 			break;
 		case toesp_cmds_t::FILE_WRITE:
 			UDBG("[Rainbow] ESP received command FILE_WRITE");
-			if(message_size >= 3 && this->working_file.active) {
+			if(message_size >= 2 && this->working_file.active) {
 				this->writeFile(this->rx_buffer.begin() + 2, this->rx_buffer.begin() + message_size + 1);
 				this->working_file.offset += message_size - 1;
 			}
 			break;
 		case toesp_cmds_t::FILE_APPEND:
 			UDBG("[Rainbow] ESP received command FILE_APPEND");
-			if(message_size >= 3 && this->working_file.active) {
-				UDBG("[Rainbow] ESP command FILE_APPEND not implemented");
-				//this->appendFile(this->rx_buffer.begin() + 2, this->rx_buffer.begin() + message_size + 1);
+			if(message_size >= 2 && this->working_file.active) {
+				this->appendFile(this->rx_buffer.begin() + 2, this->rx_buffer.begin() + message_size + 1);
 			}
 			break;
 		case toesp_cmds_t::FILE_COUNT:
@@ -1296,6 +1295,24 @@ void BrokeStudioFirmware::writeFile(I data_begin, I data_end)
 	}
 
 	for(vector<uint8_t>::size_type i = this->working_file.offset; i < offset_end; ++i) {
+		this->working_file.file->data[i] = *data_begin;
+		++data_begin;
+	}
+}
+
+template<class I>
+void BrokeStudioFirmware::appendFile(I data_begin, I data_end)
+{
+	if(this->working_file.active == false) {
+		return;
+	}
+
+	auto const data_size = data_end - data_begin;
+	size_t file_size = this->working_file.file->data.size();
+	uint32_t const offset_end = file_size + data_size;
+	this->working_file.file->data.resize(offset_end, 0);
+
+	for(vector<uint8_t>::size_type i = file_size; i < offset_end; ++i) {
 		this->working_file.file->data[i] = *data_begin;
 		++data_begin;
 	}
