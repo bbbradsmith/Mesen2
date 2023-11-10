@@ -553,10 +553,18 @@ void BrokeStudioFirmware::processBufferedMessage()
 			if(message_size == 1) {
 				this->tx_messages.push_back({
 					2,
-					static_cast<uint8_t>(fromesp_cmds_t::NETWORK_COUNT),
+					static_cast<uint8_t>(fromesp_cmds_t::NETWORK_SCAN_RESULT),
 					NUM_FAKE_NETWORKS
 				});
 			}
+			break;
+		case toesp_cmds_t::NETWORK_GET_SCAN_RESULT:
+			UDBG("[Rainbow] ESP received command NETWORK_GET_SCAN_RESULT");
+			this->tx_messages.push_back({
+				2,
+				static_cast<uint8_t>(fromesp_cmds_t::NETWORK_SCAN_RESULT),
+				NUM_FAKE_NETWORKS
+			});
 			break;
 		case toesp_cmds_t::NETWORK_GET_DETAILS:
 			UDBG("[Rainbow] ESP received command NETWORK_GET_DETAILS");
@@ -828,9 +836,9 @@ void BrokeStudioFirmware::processBufferedMessage()
 			if(message_size >= 2 && message_size <= 5) {
 				if(this->working_file.active) {
 					this->working_file.offset = this->rx_buffer.at(2);
-					if(message_size == 3) this->working_file.offset += static_cast<uint32_t>(message_size >= 3 ? this->rx_buffer.at(3) : 0) << 8;
-					if(message_size == 4) this->working_file.offset += static_cast<uint32_t>(message_size >= 4 ? this->rx_buffer.at(4) : 0) << 16;
-					if(message_size == 5) this->working_file.offset += static_cast<uint32_t>(message_size >= 5 ? this->rx_buffer.at(5) : 0) << 24;
+					if(message_size == 3) this->working_file.offset += this->rx_buffer.at(3) << 8;
+					if(message_size == 4) this->working_file.offset += this->rx_buffer.at(4) << 16;
+					if(message_size == 5) this->working_file.offset += this->rx_buffer.at(5) << 24;
 				}
 			}
 			break;
