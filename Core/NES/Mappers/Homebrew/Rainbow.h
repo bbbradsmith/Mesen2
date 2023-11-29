@@ -284,15 +284,17 @@ protected:
 		// $8000-$ffff
 		uint8_t t_prgRomMode = _bootrom ? PRG_ROM_MODE_3 : _prgRomMode;
 		PrgMemoryType ramMemoryType = HasBattery() ? PrgMemoryType::SaveRam : PrgMemoryType::WorkRam;
-		uint16_t ramOffset = (HasBattery() ? _realSaveRamSize : _realWorkRamSize); // +(_fpgaRamBank & 0x01) * 0x1000;
+		uint32_t ramSize = (HasBattery() ? _realSaveRamSize : _realWorkRamSize);
 		uint16_t prgOffset;
+		uint16_t mask;
 
 		// 32K
 		if(t_prgRomMode == PRG_ROM_MODE_0) {
 			prgOffset = 0x8000;
 			if(_prg[3] & 0x8000) {
 				// WRAM
-				SetCpuMemoryMapping(0x8000, 0xFFFF, ramMemoryType, (_prg[3] & 0x0003) * prgOffset, MemoryAccessType::ReadWrite);
+				mask = (ramSize / prgOffset) - 1;
+				SetCpuMemoryMapping(0x8000, 0xFFFF, ramMemoryType, (_prg[3] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 			} else {
 				// PRG-ROM
 				SetCpuMemoryMapping(0x8000, 0xFFFF, PrgMemoryType::PrgRom, (_prg[3] & 0x7fff) * prgOffset, MemoryAccessType::Read);
@@ -304,18 +306,21 @@ protected:
 			prgOffset = 0x4000;
 			if(_prg[3] & 0x8000) {
 				// WRAM
-				SetCpuMemoryMapping(0x8000, 0xBFFF, ramMemoryType, (_prg[3] & 0x0007) * prgOffset, MemoryAccessType::ReadWrite);
+				mask = (ramSize / prgOffset) - 1;
+				SetCpuMemoryMapping(0x8000, 0xBFFF, ramMemoryType, (_prg[3] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 			} else {
 				// PRG-ROM
 				SetCpuMemoryMapping(0x8000, 0xBFFF, PrgMemoryType::PrgRom, (_prg[3] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
 			}
 
-			if(_prg[7] & 0x8000)
+			if(_prg[7] & 0x8000) {
 				// WRAM
-				SetCpuMemoryMapping(0xC000, 0xFFFF, ramMemoryType, (_prg[7] & 0x0007) * prgOffset, MemoryAccessType::ReadWrite);
-			else
+				mask = (ramSize / prgOffset) - 1;
+				SetCpuMemoryMapping(0xC000, 0xFFFF, ramMemoryType, (_prg[7] & mask) * prgOffset, MemoryAccessType::ReadWrite);
+			} else {
 				// PRG-ROM
 				SetCpuMemoryMapping(0xC000, 0xFFFF, PrgMemoryType::PrgRom, (_prg[7] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
+			}
 		}
 
 		// 16K + 8K + 8K
@@ -323,7 +328,8 @@ protected:
 			prgOffset = 0x4000;
 			if(_prg[3] & 0x8000) {
 				// WRAM
-				SetCpuMemoryMapping(0x8000, 0xBFFF, ramMemoryType, (_prg[3] & 0x0007) * prgOffset, MemoryAccessType::ReadWrite);
+				mask = (ramSize / prgOffset) - 1;
+				SetCpuMemoryMapping(0x8000, 0xBFFF, ramMemoryType, (_prg[3] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 			} else {
 				// PRG-ROM
 				SetCpuMemoryMapping(0x8000, 0xBFFF, PrgMemoryType::PrgRom, (_prg[3] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
@@ -332,7 +338,8 @@ protected:
 			prgOffset = 0x2000;
 			if(_prg[7] & 0x8000) {
 				// WRAM
-				SetCpuMemoryMapping(0xC000, 0xDFFF, ramMemoryType, (_prg[7] & 0x000F) * prgOffset, MemoryAccessType::ReadWrite);
+				mask = (ramSize / prgOffset) - 1;
+				SetCpuMemoryMapping(0xC000, 0xDFFF, ramMemoryType, (_prg[7] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 			} else {
 				// PRG-ROM
 				SetCpuMemoryMapping(0xC000, 0xDFFF, PrgMemoryType::PrgRom, (_prg[7] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
@@ -340,7 +347,8 @@ protected:
 
 			if(_prg[9] & 0x8000) {
 				// WRAM
-				SetCpuMemoryMapping(0xE000, 0xFFFF, ramMemoryType, (_prg[9] & 0x000F) * prgOffset, MemoryAccessType::ReadWrite);
+				mask = (ramSize / prgOffset) - 1;
+				SetCpuMemoryMapping(0xE000, 0xFFFF, ramMemoryType, (_prg[9] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 			} else {
 				// PRG-ROM
 				SetCpuMemoryMapping(0xE000, 0xFFFF, PrgMemoryType::PrgRom, (_prg[9] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
@@ -353,11 +361,12 @@ protected:
 			for(uint8_t i = 0; i < 4; i++) {
 				if(i == 3 && _bootrom) {
 					// FPGA FLASH
-					SetCpuMemoryMapping(0xE000, 0xFFFF, ramMemoryType, ramOffset + FpgaRamSize, MemoryAccessType::Read);
+					SetCpuMemoryMapping(0xE000, 0xFFFF, ramMemoryType, ramSize + FpgaRamSize, MemoryAccessType::Read);
 				} else {
 					if(_prg[3 + i * 2] & 0x8000) {
 						// WRAM
-						SetCpuMemoryMapping(0x8000 + 0x2000 * i, 0x8000 + 0x2000 * i + 0x1FFF, ramMemoryType, (_prg[3 + i * 2] & 0x000F) * prgOffset, MemoryAccessType::ReadWrite);
+						mask = (ramSize / prgOffset) - 1;
+						SetCpuMemoryMapping(0x8000 + 0x2000 * i, 0x8000 + 0x2000 * i + 0x1FFF, ramMemoryType, (_prg[3 + i * 2] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 					} else {
 						// PRG-ROM
 						SetCpuMemoryMapping(0x8000 + 0x2000 * i, 0x8000 + 0x2000 * i + 0x1FFF, PrgMemoryType::PrgRom, (_prg[3 + i * 2] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
@@ -372,7 +381,8 @@ protected:
 			for(uint8_t i = 0; i < 8; i++) {
 				if(_prg[3 + i] & 0x8000) {
 					// WRAM
-					SetCpuMemoryMapping(0x8000 + 0x1000 * i, 0x8000 + 0x1000 * i + 0x0FFF, ramMemoryType, (_prg[3 + i] & 0x001F) * prgOffset, MemoryAccessType::ReadWrite);
+					mask = (ramSize / prgOffset) - 1;
+					SetCpuMemoryMapping(0x8000 + 0x1000 * i, 0x8000 + 0x1000 * i + 0x0FFF, ramMemoryType, (_prg[3 + i] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 				} else {
 					// PRG-ROM
 					SetCpuMemoryMapping(0x8000 + 0x1000 * i, 0x8000 + 0x1000 * i + 0x0FFF, PrgMemoryType::PrgRom, (_prg[3 + i] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
@@ -386,18 +396,19 @@ protected:
 		if(_prgRamMode == PRG_RAM_MODE_0) {
 			prgOffset = 0x2000;
 			switch((_prg[1] & 0xC000) >> 14) {
-				// PRG-ROM
 				case 0:
 				case 1:
+					// PRG-ROM
 					SetCpuMemoryMapping(0x6000, 0x7FFF, PrgMemoryType::PrgRom, (_prg[1] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
 					break;
-					// WRAM
 				case 2:
-					SetCpuMemoryMapping(0x6000, 0x7FFF, ramMemoryType, (_prg[1] & 0x000F) * prgOffset, MemoryAccessType::ReadWrite);
+					// WRAM
+					mask = (ramSize / prgOffset) - 1;
+					SetCpuMemoryMapping(0x6000, 0x7FFF, ramMemoryType, (_prg[1] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 					break;
-					// FPGA-RAM
 				case 3:
-					SetCpuMemoryMapping(0x6000, 0x7FFF, ramMemoryType, ramOffset + (_prg[1] & 0x000F) * prgOffset, MemoryAccessType::ReadWrite);
+					// FPGA-RAM
+					SetCpuMemoryMapping(0x6000, 0x7FFF, ramMemoryType, ramSize, MemoryAccessType::ReadWrite);
 					break;
 			}
 		}
@@ -406,48 +417,51 @@ protected:
 		if(_prgRamMode == PRG_RAM_MODE_1) {
 			prgOffset = 0x1000;
 			switch((_prg[1] & 0xC000) >> 14) {
-				// PRG-ROM
 				case 0:
 				case 1:
+					// PRG-ROM
 					SetCpuMemoryMapping(0x6000, 0x6FFF, PrgMemoryType::PrgRom, (_prg[1] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
 					break;
-					// WRAM
 				case 2:
-					SetCpuMemoryMapping(0x6000, 0x6FFF, ramMemoryType, (_prg[1] & 0x001F) * prgOffset, MemoryAccessType::ReadWrite);
+					// WRAM
+					mask = (ramSize / prgOffset) - 1;
+					SetCpuMemoryMapping(0x6000, 0x6FFF, ramMemoryType, (_prg[1] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 					break;
-					// FPGA-RAM
 				case 3:
-					SetCpuMemoryMapping(0x6000, 0x6FFF, ramMemoryType, ramOffset + (_prg[1] & 0x001F) * prgOffset, MemoryAccessType::ReadWrite);
+					// FPGA-RAM
+					SetCpuMemoryMapping(0x6000, 0x6FFF, ramMemoryType, ramSize + (_prg[1] & 0x0001) * prgOffset, MemoryAccessType::ReadWrite);
 					break;
 			}
 
 			switch((_prg[2] & 0xC000) >> 14) {
-				// PRG-ROM
 				case 0:
 				case 1:
+					// PRG-ROM
 					SetCpuMemoryMapping(0x7000, 0x7FFF, PrgMemoryType::PrgRom, (_prg[2] & 0x7FFF) * prgOffset, MemoryAccessType::Read);
 					break;
-					// WRAM
 				case 2:
-					SetCpuMemoryMapping(0x7000, 0x7FFF, ramMemoryType, (_prg[2] & 0x001F) * prgOffset, MemoryAccessType::ReadWrite);
+					// WRAM
+					mask = (ramSize / prgOffset) - 1;
+					SetCpuMemoryMapping(0x7000, 0x7FFF, ramMemoryType, (_prg[2] & mask) * prgOffset, MemoryAccessType::ReadWrite);
 					break;
-					// FPGA-RAM
 				case 3:
-					SetCpuMemoryMapping(0x7000, 0x7FFF, ramMemoryType, ramOffset + (_prg[2] & 0x001F) * prgOffset, MemoryAccessType::ReadWrite);
+					// FPGA-RAM
+					SetCpuMemoryMapping(0x7000, 0x7FFF, ramMemoryType, ramSize + (_prg[2] & 0x0001) * prgOffset, MemoryAccessType::ReadWrite);
 					break;
 			}
 		}
 
 		// $5000-$5fff - 4K FPGA-RAM
-		if(_bootrom)
+		if(_bootrom) {
 			// FPGA FLASH
-			SetCpuMemoryMapping(0x5000, 0x5FFF, ramMemoryType, ramOffset + FpgaRamSize + 0x2000, MemoryAccessType::Read);
-		else
+			SetCpuMemoryMapping(0x5000, 0x5FFF, ramMemoryType, ramSize + FpgaRamSize + 0x2000, MemoryAccessType::Read);
+		} else {
 			// FPGA RAM
-			SetCpuMemoryMapping(0x5000, 0x5FFF, ramMemoryType, ramOffset + (_prg[0] & 0x0001) * 0x1000, MemoryAccessType::ReadWrite);
+			SetCpuMemoryMapping(0x5000, 0x5FFF, ramMemoryType, ramSize + (_prg[0] & 0x0001) * 0x1000, MemoryAccessType::ReadWrite);
+		}
 
 		// $4800-$4fff
-		SetCpuMemoryMapping(0x4800, 0x4FFF, ramMemoryType, ramOffset + 0x1800, MemoryAccessType::ReadWrite);
+		SetCpuMemoryMapping(0x4800, 0x4FFF, ramMemoryType, ramSize + 0x1800, MemoryAccessType::ReadWrite);
 
 	}
 
