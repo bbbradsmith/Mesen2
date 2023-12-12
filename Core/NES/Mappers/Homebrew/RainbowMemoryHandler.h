@@ -11,14 +11,13 @@ class RainbowMemoryHandler : public INesMemoryHandler
 	uint8_t _ppuRegs[8] = {};
 	uint8_t _oamOffset;
 	uint8_t _sprY[64];
-	uint16_t _oamWrite;
 
 public:
 	RainbowMemoryHandler(NesConsole* console, RainbowAudio* audio)
 	{
 		_audio = audio;
 		_console = console;
-		_oamOffset = 2;
+		_oamOffset = 0;
 	}
 
 	uint8_t GetPpuReg(uint16_t addr)
@@ -51,17 +50,16 @@ public:
 
 		if(addr >= 0x2000 && addr <= 0x2007) {
 			_ppuRegs[addr & 0x07] = value;
-			if(addr == 0x2004) {
-				uint8_t spriteIndex = (_oamWrite >> 2) & 0x3f;
-				_sprY[spriteIndex] = value;
-				_oamWrite++;
+			if(addr == 0x2003) {
+				_oamOffset = value;
 			}
-		} else if(addr == 0x4014) {
-			_oamOffset = value;
-			_oamWrite = 0;
-		}/* else if(addr == 0x4011) {
-			//uint32_t out = _audio->_lastOutput;
-			_console->GetMemoryManager()->Write(0x4011, 0xFF, MemoryOperationType::Write);
-		}*/
+			if(addr == 0x2004) {
+				if((_oamOffset & 0x03) == 0) {
+					uint8_t spriteIndex = (_oamOffset >> 2) & 0x3f;
+					_sprY[spriteIndex] = value;
+				}
+				_oamOffset++;
+			}
+		}
 	}
 };

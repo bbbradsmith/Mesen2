@@ -82,7 +82,7 @@ private:
 	uint8_t _oamOffset;
 	uint8_t _spriteBankOffset;
 	uint8_t _spriteBank[64];
-	uint8_t _spriteYOrder[64];
+	uint8_t _spriteYOrder[8];
 	uint8_t _spriteIndex;
 	uint8_t _spriteCounter;
 	uint8_t _spriteOrderingStep = 0;
@@ -222,7 +222,6 @@ protected:
 	{
 		_console->GetMemoryManager()->RegisterWriteHandler(_rainbowMemoryHandler.get(), 0x2000, 0x2007);
 		_console->GetMemoryManager()->RegisterReadHandler(_rainbowMemoryHandler.get(), 0x4011, 0x4011);
-		_console->GetMemoryManager()->RegisterWriteHandler(_rainbowMemoryHandler.get(), 0x4014, 0x4014);
 
 		// PRG - 32K banks mapped to first PRG-ROM bank
 		_prgRomMode = PRG_ROM_MODE_0;
@@ -577,10 +576,10 @@ protected:
 			case 1:
 				//_console->GetNesConfig().RemoveSpriteLimit;
 				bool largeSprites = (_rainbowMemoryHandler->GetPpuReg(0x2000) & 0x20) != 0;
-				uint8_t spriteCurrentYPos = _rainbowMemoryHandler->GetSpriteYPos(_spriteIndex);
-				uint8_t spriteMaxYPos = _rainbowMemoryHandler->GetSpriteYPos(_spriteIndex) + (largeSprites ? 16 : 8);
+				uint8_t spriteMinYPos = _rainbowMemoryHandler->GetSpriteYPos(_spriteCounter);
+				uint8_t spriteMaxYPos = _rainbowMemoryHandler->GetSpriteYPos(_spriteCounter) + (largeSprites ? 16 : 8);
 				if(_spriteIndex < 8 && _spriteCounter < 64) {
-					if(_scanlineCounter >= spriteCurrentYPos && _scanlineCounter <= spriteMaxYPos) {
+					if(_scanlineCounter >= spriteMinYPos && _scanlineCounter < spriteMaxYPos) {
 						_spriteYOrder[_spriteIndex] = _spriteBank[_spriteCounter];
 						_spriteIndex++;
 					}
@@ -1373,12 +1372,12 @@ protected:
 		// Sprite Extended Mode
 		if((_dotCounter >= 130) && (_dotCounter < 160) && _chrSprExtMode) {
 			bool largeSprites = (_rainbowMemoryHandler->GetPpuReg(0x2000) & 0x20) != 0;
-			uint8_t ppuSpriteFetch = (_dotCounter - 130) >> 2;
-			uint8_t ppuSpriteIndex = _spriteYOrder[ppuSpriteFetch];
+			uint8_t spriteFetch = (_dotCounter - 130) >> 2;
+			uint8_t spriteBank = _spriteYOrder[spriteFetch];
 			if(largeSprites)
-				return ReadFromChr(((_spriteBankOffset & 0x03) << 21) + (_spriteBank[ppuSpriteIndex] << 13) + (addr & 0x1FFF));
+				return ReadFromChr(((_spriteBankOffset & 0x03) << 21) + (spriteBank << 13) + (addr & 0x1FFF));
 			else
-				return ReadFromChr((_spriteBankOffset << 20) + (_spriteBank[ppuSpriteIndex] << 12) + (addr & 0xFFF));
+				return ReadFromChr((_spriteBankOffset << 20) + (spriteBank << 12) + (addr & 0xFFF));
 		}
 
 		// Window Mode
