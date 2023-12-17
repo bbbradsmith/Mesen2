@@ -123,7 +123,7 @@ private:
 	bool _espIrqEnable;
 	bool _espHasReceivedMessage;
 	bool _espMessageSent;
-	uint8_t _espRxAddress, _espTxAddress, _espRxIndex;
+	uint8_t _espRxAddress, _espTxAddress;
 
 	// MISC
 	uint8_t _audioOutput;
@@ -155,6 +155,10 @@ private:
 	bool _cpuCycleIrqEnable, _cpuCycleIrqReset, _cpuCycleIrqPending;
 	uint16_t _cpuCycleIrqLatch;
 	int32_t _cpuCycleIrqCount;
+
+	// FPGA RAM auto R/W
+	uint16_t _fpgaRamAutoRwAddress;
+	uint8_t _fpgaRamAutoRwIncrement;
 
 protected:
 	uint16_t GetPrgPageSize() override { return 0x1000; }
@@ -272,7 +276,6 @@ protected:
 		_espMessageSent = true;
 		_espRxAddress = 0;
 		_espTxAddress = 0;
-		_espRxIndex = 0;
 
 		UpdatePrgBanks();
 		UpdateChrBanks();
@@ -738,7 +741,7 @@ protected:
 		SV(_espIrqEnable);
 		SV(_espHasReceivedMessage);
 		SV(_espMessageSent);
-		SV(_espRxAddress); SV(_espTxAddress); SV(_espRxIndex);
+		SV(_espRxAddress); SV(_espTxAddress);
 
 		// MISC
 		SV(_audioOutput);
@@ -820,8 +823,13 @@ protected:
 
 		if(addr >= 0x4100 && addr <= 0x47FF) {	// MAPPER REGISTERS
 			switch(addr) {
+					// PRG
 				case 0x4100: return (_prgRamMode << 6) | _prgRomMode;
+
+					// CHR
 				case 0x4120: return (_chrChip << 6) | (_chrSprExtMode << 5) | (_windowModeEnabled << 4) | _chrMode;
+
+					// PPU SCANLINE
 				case 0x4151:
 				{
 					uint8_t rv = (_scanlineIrqHblank ? 0x80 : 0) | (_scanlineIrqInFrame ? 0x40 : 0 | (_scanlineIrqPending ? 0x01 : 0));
@@ -831,8 +839,21 @@ protected:
 					return rv;
 				}
 				case 0x4154: return _scanlineIrqJitterCounter;
+
+					// FPGA RAM auto R/W
+				case 0x415F:
+				{
+					uint8_t retval = _fpgaRam[_fpgaRamAutoRwAddress];
+					_fpgaRamAutoRwAddress += _fpgaRamAutoRwIncrement;
+					return retval;
+				}
+
+					// MISC
 				case 0x4160: return MAPPER_VERSION;
+
+					// IRQs
 				case 0x4161: return (_scanlineIrqPending ? 0x80 : 0) | (_cpuCycleIrqPending ? 0x40 : 0) | ((_espIrqEnable && _espHasReceivedMessage) ? 0x01 : 0x00);
+
 					// ESP - WiFi
 				case 0x4190:
 				{
@@ -849,12 +870,6 @@ protected:
 					return espMessageReceivedFlag | espRtsFlag;
 				}
 				case 0x4192: return _espMessageSent ? 0x80 : 0;
-				case 0x4195:
-				{
-					uint8_t retval = _fpgaRam[0x1800 + (_espRxAddress << 8) + _espRxIndex];
-					_espRxIndex++;
-					return retval;
-				}
 			}
 		} else if(addr >= 0x4800 && addr <= 0x5FFF) {	// FPGA-RAM Reads
 			return InternalReadRam(addr); // FPGA-RAM
@@ -1104,11 +1119,11 @@ protected:
 
 					// CPU Cycle IRQ
 				case 0x4158:
-					_cpuCycleIrqLatch &= 0xFF00;
+					_cpuCycleIrqLatch &= 0xff00;
 					_cpuCycleIrqLatch |= value;
 					break;
 				case 0x4159:
-					_cpuCycleIrqLatch &= 0x00FF;
+					_cpuCycleIrqLatch &= 0x00ff;
 					_cpuCycleIrqLatch |= value << 8;
 					break;
 				case 0x415A:
@@ -1122,6 +1137,16 @@ protected:
 					_cpuCycleIrqEnable = _cpuCycleIrqReset;
 					ClearIrq();
 					break;
+
+					// FPGA RAM auto R/W
+				case 0x415C: _fpgaRamAutoRwAddress = (_fpgaRamAutoRwAddress & 0x00ff) | ((value & 0x1f) << 8); break;
+				case 0x415D: _fpgaRamAutoRwAddress = (_fpgaRamAutoRwAddress & 0xff00) | (value); break;
+				case 0x415E: _fpgaRamAutoRwIncrement = value; break;
+				case 0x415F:
+				{
+					_fpgaRam[_fpgaRamAutoRwAddress] = value;
+					_fpgaRamAutoRwAddress += _fpgaRamAutoRwIncrement;
+				}
 
 					// Window Mode
 				case 0x4170: _windowXStartTile = value & 0x1f; break;
@@ -1159,9 +1184,6 @@ protected:
 					break;
 				case 0x4194:
 					_espTxAddress = value & 0x07;
-					break;
-				case 0x4195:
-					_espRxIndex = value;
 					break;
 
 					// Audio Expansion
@@ -1680,7 +1702,6 @@ protected:
 			for(uint8_t i = 0; i < message_length; i++) {
 				_fpgaRam[0x1800 + (_espRxAddress << 8) + 1 + i] = _esp->tx();
 			}
-			_espRxIndex = 0;
 			_espHasReceivedMessage = true;
 		}
 	}
