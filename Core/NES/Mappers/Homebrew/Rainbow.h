@@ -74,6 +74,7 @@ private:
 	// CHR-ROM/RAM
 	uint8_t _chrChip, _chrSprExtMode, _chrMode;
 	uint16_t _chr[16];
+	uint8_t _fillModeTile, _fillModeAttribute;
 	uint8_t _ntBank[5], _ntControl[5];
 	unique_ptr<Flash3_3V> _chrFlash;
 	vector<uint8_t> _orgChrRom;
@@ -1030,6 +1031,10 @@ protected:
 					_bgBankOffset = value & 0x1f;
 					break;
 
+					// Fill-mode
+				case 0x4124: _fillModeTile = value; break;
+				case 0x4125: _fillModeAttribute = value & 0x03; break;
+
 					// Nametables bank
 				case 0x4126: _ntBank[0] = value; UpdateChrBanks(); break;
 				case 0x4127: _ntBank[1] = value; UpdateChrBanks(); break;
@@ -1386,6 +1391,7 @@ protected:
 			_windowExtModeLastMode = _ntControl[4] & 0x03;
 			if(addr >= 0x2000) {
 				if(isNtFetch) {
+					// Tiles
 					uint8_t tileX = (_windowSplitXPos >> 2) & 0x1f;
 					uint8_t tileY = (_windowSplitYPos >> 3) & 0x1f;
 					bool inWindowX = ((_windowXStartTile < _windowXEndTile) ?
@@ -1402,6 +1408,11 @@ protected:
 						_windowInSplitRegion = true;
 						_splitTile = (tileY << 5) | ((tileX - _windowXScroll) & 0x1f);
 						_windowExtModeLastValue = _fpgaRam[_windowExtModeLast1kDest * 0x400 + _splitTile];
+
+						// Fill-mode?
+						if(_ntControl[4] & 0x20)
+							return _fillModeTile;
+
 						uint16_t tileAddr = _ntBank[4] * 0x400 + _splitTile;
 						return _fpgaRam[tileAddr];
 					} else {
@@ -1410,6 +1421,11 @@ protected:
 					}
 				} else if(_windowInSplitRegion) {
 					//Attributes
+					
+					// Fill-mode?
+					if(_ntControl[4] & 0x20)
+						return _fillModeAttribute | _fillModeAttribute << 2 | _fillModeAttribute << 4 | _fillModeAttribute << 6;
+
 					switch(_windowExtModeLastMode) {
 						case 0:	// extended mode disabled
 						case 2:	// extended tiles
@@ -1442,12 +1458,18 @@ protected:
 		//When fetching NT data, we set a flag and then alter the VRAM values read by the PPU on the following 3 cycles (palette, tile low/high byte)
 		if(isNtFetch) {
 			//Nametable fetches
-			_extModeLastNametableFetch = addr & 0x03FF;
+
 			_extModeLastFetchCounter = 3;
+			_extModeLastNametableFetch = addr & 0x03FF;
 			_extModeLastNtIdx = (addr >> 10) & 0x03;
 			_extModeLast1kDest = (_ntControl[_extModeLastNtIdx] & 0x0C) >> 2;
 			_extModeLastMode = _ntControl[_extModeLastNtIdx] & 0x03;
 			_extModeLastValue = _fpgaRam[_extModeLast1kDest * 0x400 + (addr & 0x3ff)];
+
+			// Fill-mode?
+			if(_ntControl[(addr >> 10) & 0x03] & 0x20)
+				return _fillModeTile;
+
 			switch(_extModeLastMode) {
 				case 0:	// extended mode disabled
 				case 1:	// extended attributes
@@ -1460,11 +1482,17 @@ protected:
 			}
 		} else if(_ppuInFrame && _extModeLastFetchCounter > 0) {
 			//Attribute fetches or PPU tile data fetches
+
 			_extModeLastFetchCounter--;
 			switch(_extModeLastFetchCounter) {
 				case 2:
 				{
 					//PPU palette fetch
+					
+					// Fill-mode?
+					if(_ntControl[(addr >> 10) & 0x03] & 0x20)
+						return _fillModeAttribute | _fillModeAttribute << 2 | _fillModeAttribute << 4 | _fillModeAttribute << 6;
+
 					switch(_extModeLastMode) {
 						case 0:	// extended mode disabled
 						case 2:	// extended tiles
