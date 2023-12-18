@@ -1225,7 +1225,7 @@ protected:
 					break;
 				case PRG_RAM_MODE_1:
 					// 2 x 4K
-					prgIdx = ((addr >> 12) & 0x07) - 6;
+					prgIdx = ((addr >> 12) & 0x07) - 5;
 					if(((_prg[prgIdx] & 0x8000) >> 14) != 0)
 						return WritePrgRam(addr, value); // FPGA_RAM or WRAM
 
