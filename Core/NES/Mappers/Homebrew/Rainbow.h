@@ -11,9 +11,9 @@
 #include "Utilities/Patches/IpsPatcher.h"
 #include "Utilities/Serializer.h"
 
-// mapper 682 - Rainbow2 board v1.0 revA and v1.1 by Broke Studio
+// mapper 682 - Rainbow board by Broke Studio
 //
-// documentation available here: https://github.com/BrokeStudio/rainbow-lib
+// documentation available here: https://github.com/BrokeStudio/rainbow-net
 
 #define MAPPER_PLATFORM_PCB 0
 #define MAPPER_PLATFORM_EMU 1
@@ -823,7 +823,8 @@ protected:
 
 		if(addr >= 0x4100 && addr <= 0x47FF) {	// MAPPER REGISTERS
 			switch(addr) {
-					// PRG
+
+				// PRG
 				case 0x4100: return (_prgRamMode << 6) | _prgRomMode;
 
 					// CHR
@@ -848,7 +849,7 @@ protected:
 					return retval;
 				}
 
-					// MISC
+				// MISC
 				case 0x4160: return MAPPER_VERSION;
 
 					// IRQs
@@ -1143,10 +1144,9 @@ protected:
 				case 0x415D: _fpgaRamAutoRwAddress = (_fpgaRamAutoRwAddress & 0xff00) | (value); break;
 				case 0x415E: _fpgaRamAutoRwIncrement = value; break;
 				case 0x415F:
-				{
 					_fpgaRam[_fpgaRamAutoRwAddress] = value;
 					_fpgaRamAutoRwAddress += _fpgaRamAutoRwIncrement;
-				}
+					break;
 
 					// Window Mode
 				case 0x4170: _windowXStartTile = value & 0x1f; break;
@@ -1443,7 +1443,7 @@ protected:
 					}
 				} else if(_windowInSplitRegion) {
 					//Attributes
-					
+
 					// Fill-mode?
 					if(_ntControl[4] & 0x20)
 						return _fillModeAttribute | _fillModeAttribute << 2 | _fillModeAttribute << 4 | _fillModeAttribute << 6;
@@ -1510,7 +1510,7 @@ protected:
 				case 2:
 				{
 					//PPU palette fetch
-					
+
 					// Fill-mode?
 					if(_ntControl[(addr >> 10) & 0x03] & 0x20)
 						return _fillModeAttribute | _fillModeAttribute << 2 | _fillModeAttribute << 4 | _fillModeAttribute << 6;
