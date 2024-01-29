@@ -1480,67 +1480,69 @@ protected:
 		}
 
 		//When fetching NT data, we set a flag and then alter the VRAM values read by the PPU on the following 3 cycles (palette, tile low/high byte)
-		if(isNtFetch) {
-			//Nametable fetches
+		if(_splitTileNumber < 32 || _splitTileNumber >= 40) {
+			if(isNtFetch) {
+				//Nametable fetches
 
-			_extModeLastFetchCounter = 3;
-			_extModeLastNametableFetch = addr & 0x03FF;
-			_extModeLastNtIdx = (addr >> 10) & 0x03;
-			_extModeLast1kDest = (_ntControl[_extModeLastNtIdx] & 0x0C) >> 2;
-			_extModeLastMode = _ntControl[_extModeLastNtIdx] & 0x03;
-			_extModeLastValue = _fpgaRam[_extModeLast1kDest * 0x400 + (addr & 0x3ff)];
+				_extModeLastFetchCounter = 3;
+				_extModeLastNametableFetch = addr & 0x03FF;
+				_extModeLastNtIdx = (addr >> 10) & 0x03;
+				_extModeLast1kDest = (_ntControl[_extModeLastNtIdx] & 0x0C) >> 2;
+				_extModeLastMode = _ntControl[_extModeLastNtIdx] & 0x03;
+				_extModeLastValue = _fpgaRam[_extModeLast1kDest * 0x400 + (addr & 0x3ff)];
 
-			// Fill-mode?
-			if(_ntControl[(addr >> 10) & 0x03] & 0x20)
-				return _fillModeTile;
+				// Fill-mode?
+				if(_ntControl[(addr >> 10) & 0x03] & 0x20)
+					return _fillModeTile;
 
-			switch(_extModeLastMode) {
-				case 0:	// extended mode disabled
-				case 1:	// extended attributes
-					return InternalReadVram(addr);
-				case 2:	// extended tiles
-				case 3:	// extended attributes + tiles
-				{
-					return InternalReadVram(addr);
+				switch(_extModeLastMode) {
+					case 0:	// extended mode disabled
+					case 1:	// extended attributes
+						return InternalReadVram(addr);
+					case 2:	// extended tiles
+					case 3:	// extended attributes + tiles
+					{
+						return InternalReadVram(addr);
+					}
 				}
-			}
-		} else if(_ppuInFrame && _extModeLastFetchCounter > 0) {
-			//Attribute fetches or PPU tile data fetches
+			} else if(_ppuInFrame && _extModeLastFetchCounter > 0) {
+				//Attribute fetches or PPU tile data fetches
 
-			_extModeLastFetchCounter--;
-			switch(_extModeLastFetchCounter) {
-				case 2:
-				{
-					//PPU palette fetch
+				_extModeLastFetchCounter--;
+				switch(_extModeLastFetchCounter) {
+					case 2:
+					{
+						//PPU palette fetch
 
-					// Fill-mode?
-					if(_ntControl[(addr >> 10) & 0x03] & 0x20)
-						return _fillModeAttribute | _fillModeAttribute << 2 | _fillModeAttribute << 4 | _fillModeAttribute << 6;
+						// Fill-mode?
+						if(_ntControl[(addr >> 10) & 0x03] & 0x20)
+							return _fillModeAttribute | _fillModeAttribute << 2 | _fillModeAttribute << 4 | _fillModeAttribute << 6;
 
-					switch(_extModeLastMode) {
-						case 0:	// extended mode disabled
-						case 2:	// extended tiles
-							return InternalReadVram(addr);
-						case 1:	// extended attributes
-						case 3:	// extended attributes + tiles
-						{
-							uint8_t palette = (_extModeLastValue & 0xC0) >> 6;
-							return palette | palette << 2 | palette << 4 | palette << 6;
+						switch(_extModeLastMode) {
+							case 0:	// extended mode disabled
+							case 2:	// extended tiles
+								return InternalReadVram(addr);
+							case 1:	// extended attributes
+							case 3:	// extended attributes + tiles
+							{
+								uint8_t palette = (_extModeLastValue & 0xC0) >> 6;
+								return palette | palette << 2 | palette << 4 | palette << 6;
+							}
 						}
 					}
-				}
 
-				case 1:
-				case 0:
-					//PPU tile data fetch (high byte & low byte)
-					switch(_extModeLastMode) {
-						case 0:	// extended mode disabled
-						case 1:	// extended attributes
-							return InternalReadVram(addr);
-						case 2:	// extended tiles
-						case 3:	// extended attributes + tiles
-							return ReadFromChr(((_extModeLastValue & 0x3f) << 12) + (addr & 0xFFF));
-					}
+					case 1:
+					case 0:
+						//PPU tile data fetch (high byte & low byte)
+						switch(_extModeLastMode) {
+							case 0:	// extended mode disabled
+							case 1:	// extended attributes
+								return InternalReadVram(addr);
+							case 2:	// extended tiles
+							case 3:	// extended attributes + tiles
+								return ReadFromChr(((_extModeLastValue & 0x3f) << 12) + (addr & 0xFFF));
+						}
+				}
 			}
 		}
 
