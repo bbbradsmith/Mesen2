@@ -11,12 +11,20 @@ class RainbowMemoryHandler : public INesMemoryHandler
 	uint8_t _ppuRegs[8] = {};
 	uint8_t _oamOffset;
 	uint8_t _sprY[64];
+	bool* _cpuCyclrIrqZpcmAck = nullptr;
+	bool* _cpuCycleIrqPending = nullptr;
+	bool* _cpuCycleIrqEnable = nullptr;
+	bool* _cpuCycleIrqReset = nullptr;
 
 public:
-	RainbowMemoryHandler(NesConsole* console, RainbowAudio* audio)
+	RainbowMemoryHandler(NesConsole* console, RainbowAudio* audio, bool* cpuCyclrIrqZpcmAck, bool* cpuCycleIrqPending, bool* cpuCycleIrqEnable, bool* cpuCycleIrqReset)
 	{
 		_audio = audio;
 		_console = console;
+		_cpuCyclrIrqZpcmAck = cpuCyclrIrqZpcmAck;
+		_cpuCycleIrqPending = cpuCycleIrqPending;
+		_cpuCycleIrqEnable = cpuCycleIrqEnable;
+		_cpuCycleIrqReset = cpuCycleIrqReset;
 		_oamOffset = 0;
 	}
 
@@ -35,6 +43,11 @@ public:
 	uint8_t ReadRam(uint16_t addr) override
 	{
 		if(addr == 0x4011) {
+			if(*_cpuCyclrIrqZpcmAck) {
+				*_cpuCycleIrqPending = false;
+				*_cpuCycleIrqEnable = *_cpuCycleIrqReset;
+			}
+			
 			if(_audio != nullptr && _audio->_audioOutput & 0x04)
 				return _audio->_lastOutput << 1;
 			else

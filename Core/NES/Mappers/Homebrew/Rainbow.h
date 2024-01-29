@@ -152,7 +152,7 @@ private:
 	uint8_t _ntReadCounter = 0;
 
 	// CPU CYCLE IRQ
-	bool _cpuCycleIrqEnable, _cpuCycleIrqReset, _cpuCycleIrqPending;
+	bool _cpuCycleIrqEnable, _cpuCycleIrqReset, _cpuCycleIrqPending, _cpuCyclrIrqZpcmAck;
 	uint16_t _cpuCycleIrqLatch;
 	int32_t _cpuCycleIrqCount;
 
@@ -263,6 +263,7 @@ protected:
 		_cpuCycleIrqPending = false;
 		_cpuCycleIrqEnable = false;
 		_cpuCycleIrqReset = false;
+		_cpuCyclrIrqZpcmAck = false;
 
 		// Audio Output
 		_audioOutput = 3;
@@ -630,7 +631,7 @@ protected:
 		_audio->Reset();
 
 		//Override the 2000-2007 registers to catch all writes to the PPU registers (but not their mirrors)
-		_rainbowMemoryHandler.reset(new RainbowMemoryHandler(_console, _audio.get()));
+		_rainbowMemoryHandler.reset(new RainbowMemoryHandler(_console, _audio.get(), &_cpuCyclrIrqZpcmAck, &_cpuCycleIrqPending, &_cpuCycleIrqEnable, &_cpuCycleIrqReset));
 
 		// CPU cycle IRQ
 
@@ -768,7 +769,7 @@ protected:
 
 		// CPU CYCLE IRQ
 		SV(_cpuCycleIrqEnable); SV(_cpuCycleIrqReset); SV(_cpuCycleIrqPending);
-		SV(_cpuCycleIrqLatch); SV(_cpuCycleIrqCount);
+		SV(_cpuCycleIrqLatch); SV(_cpuCycleIrqCount); SV(_cpuCyclrIrqZpcmAck);
 
 		if(!s.IsSaving()) {
 			UpdatePrgBanks();
@@ -1130,6 +1131,7 @@ protected:
 				case 0x415A:
 					_cpuCycleIrqEnable = value & 0x01;
 					_cpuCycleIrqReset = (value & 0x02) >> 1;
+					_cpuCyclrIrqZpcmAck = (value & 0x04) >> 2;
 					if(_cpuCycleIrqEnable)
 						_cpuCycleIrqCount = _cpuCycleIrqLatch;
 					break;
