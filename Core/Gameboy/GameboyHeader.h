@@ -27,20 +27,28 @@ struct GameboyHeader
 
 	uint32_t GetCartRamSize()
 	{
+		uint32_t tCartRamSize = 0;
+
 		if(CartType == 5 || CartType == 6) {
 			//MBC2 has 512x4bits of cart ram
-			return 0x200;
+			tCartRamSize = 0x200;
+		} else {
+			switch(CartRamSize) {
+				case 0: tCartRamSize = 0; break;
+				case 1: tCartRamSize = 0x800; break;
+				case 2: tCartRamSize = 0x2000; break;
+				case 3: tCartRamSize = 0x8000; break;
+				case 4: tCartRamSize = 0x20000; break;
+				case 5: tCartRamSize = 0x10000; break;
+			}
 		}
 
-		switch(CartRamSize) {
-			case 0: return 0;
-			case 1: return 0x800;
-			case 2: return 0x2000;
-			case 3: return 0x8000;
-			case 4: return 0x20000;
-			case 5: return 0x10000;
+		if(CartType == 0xFA || CartType == 0xFB) {
+			//RNBW has 8KB of FPGA-RAM
+			tCartRamSize += 0x2000;
 		}
-		return 0;
+
+		return tCartRamSize;
 	}
 
 	bool HasBattery()

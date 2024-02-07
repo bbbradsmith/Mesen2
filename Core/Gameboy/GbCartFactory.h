@@ -8,6 +8,7 @@
 #include "Gameboy/Carts/GbMbc6.h"
 #include "Gameboy/Carts/GbMbc7.h"
 #include "Gameboy/Carts/GbHuc1.h"
+#include "Gameboy/Carts/GbRainbow.h"
 
 class GbCartFactory
 {
@@ -47,6 +48,9 @@ public:
 
 			case 0x22:
 				return new GbMbc7();
+
+			case 0xFA:
+				return new GbRainbow();
 
 			case 0xFE:
 				//HuC3

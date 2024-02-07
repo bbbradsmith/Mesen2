@@ -673,6 +673,9 @@
     <ClInclude Include="Gameboy\Carts\GbMbc5.h">
       <Filter>Gameboy\Carts</Filter>
     </ClInclude>
+    <ClInclude Include="Gameboy\Carts\GbRainbow.h">
+      <Filter>Gameboy\Carts</Filter>
+    </ClInclude>
     <ClInclude Include="Gameboy\Carts\GbsCart.h">
       <Filter>Gameboy\Carts</Filter>
     </ClInclude>
