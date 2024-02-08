@@ -157,6 +157,11 @@ private:
 	uint16_t _cpuCycleIrqLatch;
 	int32_t _cpuCycleIrqCount;
 
+	// VECTOR REDIRECTION
+	bool _nmiRedirection, _irqRedirection;
+	uint16_t _nmiAddress;
+	uint16_t _irqAddress;
+
 	// FPGA RAM auto R/W
 	uint16_t _fpgaRamAutoRwAddress;
 	uint8_t _fpgaRamAutoRwIncrement;
@@ -265,6 +270,10 @@ protected:
 		_cpuCycleIrqEnable = false;
 		_cpuCycleIrqReset = false;
 		_cpuCyclrIrqZpcmAck = false;
+
+		// Vector redirection
+		_nmiRedirection = false;
+		_irqRedirection = false;
 
 		// Audio Output
 		_audioOutput = 3;
@@ -916,7 +925,16 @@ protected:
 				_scanlineIrqCounter = 0;
 				_scanlineIrqPending = false;
 				ClearIrq();
-				//return DebugReadRam(addr);
+			}
+
+			if(_nmiRedirection) {
+				if(addr == 0xFFFA) return _nmiAddress & 0xff;
+				if(addr == 0xFFFB) return _nmiAddress >> 8;
+			}
+
+			if(_irqRedirection) {
+				if(addr == 0xFFFE) return _irqAddress & 0xff;
+				if(addr == 0xFFFF) return _irqAddress >> 8;
 			}
 
 			switch(t_prgRomMode) {
@@ -1157,6 +1175,16 @@ protected:
 					_fpgaRam[_fpgaRamAutoRwAddress] = value;
 					_fpgaRamAutoRwAddress += _fpgaRamAutoRwIncrement;
 					break;
+
+					// Vector redirection
+				case 0x416B:
+					_nmiRedirection = value & 1;
+					_irqRedirection = value & 2;
+					break;
+				case 0x416C: _nmiAddress = (_nmiAddress & 0x00ff) | (value << 8); break;
+				case 0x416D: _nmiAddress = (_nmiAddress & 0xff00) | (value); break;
+				case 0x416E: _irqAddress = (_irqAddress & 0x00ff) | (value << 8); break;
+				case 0x416F: _irqAddress = (_irqAddress & 0xff00) | (value); break;
 
 					// Window Mode
 				case 0x4170: _windowXStartTile = value & 0x1f; break;
