@@ -326,7 +326,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 
 			if(format == 0) {
 				// string format
-				sprintf_s(
+				snprintf(
 					ipAddr,
 					sizeof(ipAddr),
 					"%d.%d.%d.%d",
@@ -377,7 +377,7 @@ void BrokeStudioFirmware::processBufferedMessage()
 
 			if(format == 0) {
 				// string format
-				sprintf_s(
+				snprintf(
 					macAddr,
 					sizeof(macAddr),
 					"%2X:%2X:%2X:%2X:%2X:%2X",
@@ -451,8 +451,9 @@ void BrokeStudioFirmware::processBufferedMessage()
 
 			if(format == 0) {
 				// string format
-				sprintf_s(
+				snprintf(
 					ipAddr,
+					sizeof(ipAddr),
 					"%d.%d.%d.%d\n",
 					static_cast<uint8_t>(ipAddr[2]),
 					static_cast<uint8_t>(ipAddr[3]),
