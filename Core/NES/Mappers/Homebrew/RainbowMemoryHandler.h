@@ -3,6 +3,7 @@
 #include "NES/INesMemoryHandler.h"
 #include "NES/NesConsole.h"
 #include "NES/Mappers/Audio/RainbowAudio.h"
+#include <functional>
 
 class RainbowMemoryHandler : public INesMemoryHandler
 {
@@ -12,19 +13,15 @@ class RainbowMemoryHandler : public INesMemoryHandler
 	uint8_t _oamOffset;
 	uint8_t _sprY[64];
 	bool* _cpuCyclrIrqZpcmAck = nullptr;
-	bool* _cpuCycleIrqPending = nullptr;
-	bool* _cpuCycleIrqEnable = nullptr;
-	bool* _cpuCycleIrqReset = nullptr;
+	std::function<void()> _acknowledgeCpuCycleIrq;
 
 public:
-	RainbowMemoryHandler(NesConsole* console, RainbowAudio* audio, bool* cpuCyclrIrqZpcmAck, bool* cpuCycleIrqPending, bool* cpuCycleIrqEnable, bool* cpuCycleIrqReset)
+	RainbowMemoryHandler(NesConsole* console, RainbowAudio* audio, bool* cpuCyclrIrqZpcmAck, std::function<void()> AcknowledgeCpuCycleIrq)
 	{
 		_audio = audio;
 		_console = console;
 		_cpuCyclrIrqZpcmAck = cpuCyclrIrqZpcmAck;
-		_cpuCycleIrqPending = cpuCycleIrqPending;
-		_cpuCycleIrqEnable = cpuCycleIrqEnable;
-		_cpuCycleIrqReset = cpuCycleIrqReset;
+		_acknowledgeCpuCycleIrq = AcknowledgeCpuCycleIrq;
 		_oamOffset = 0;
 	}
 
@@ -44,8 +41,7 @@ public:
 	{
 		if(addr == 0x4011) {
 			if(*_cpuCyclrIrqZpcmAck) {
-				*_cpuCycleIrqPending = false;
-				*_cpuCycleIrqEnable = *_cpuCycleIrqReset;
+				_acknowledgeCpuCycleIrq();
 			}
 			
 			if(_audio != nullptr && _audio->_audioOutput & 0x04)

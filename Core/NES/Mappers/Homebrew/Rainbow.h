@@ -10,6 +10,7 @@
 #include "Shared/BatteryManager.h"
 #include "Utilities/Patches/IpsPatcher.h"
 #include "Utilities/Serializer.h"
+#include <functional>
 
 // mapper 682 - Rainbow board by Broke Studio
 //
@@ -280,6 +281,13 @@ protected:
 
 		UpdatePrgBanks();
 		UpdateChrBanks();
+	}
+
+	void AcknowledgeCpuCycleIrq()
+	{
+		_cpuCycleIrqPending = false;
+		_cpuCycleIrqEnable = _cpuCycleIrqReset;
+		ClearIrq();
 	}
 
 	void UpdatePrgBanks()
@@ -630,8 +638,10 @@ protected:
 		_audio.reset(new RainbowAudio(_console));
 		_audio->Reset();
 
-		//Override the 2000-2007 registers to catch all writes to the PPU registers (but not their mirrors)
-		_rainbowMemoryHandler.reset(new RainbowMemoryHandler(_console, _audio.get(), &_cpuCyclrIrqZpcmAck, &_cpuCycleIrqPending, &_cpuCycleIrqEnable, &_cpuCycleIrqReset));
+		// Override the 2000-2007 registers to catch all writes to the PPU registers (but not their mirrors)
+		// Catch reads to 4011
+		// Catch writes to 2003/2004
+		_rainbowMemoryHandler.reset(new RainbowMemoryHandler(_console, _audio.get(), &_cpuCyclrIrqZpcmAck, std::bind(&Rainbow::AcknowledgeCpuCycleIrq, this)));
 
 		// CPU cycle IRQ
 
@@ -1121,12 +1131,12 @@ protected:
 
 					// CPU Cycle IRQ
 				case 0x4158:
-					_cpuCycleIrqLatch &= 0xff00;
-					_cpuCycleIrqLatch |= value;
-					break;
-				case 0x4159:
 					_cpuCycleIrqLatch &= 0x00ff;
 					_cpuCycleIrqLatch |= value << 8;
+					break;
+				case 0x4159:
+					_cpuCycleIrqLatch &= 0xff00;
+					_cpuCycleIrqLatch |= value;
 					break;
 				case 0x415A:
 					_cpuCycleIrqEnable = value & 0x01;
@@ -1136,9 +1146,7 @@ protected:
 						_cpuCycleIrqCount = _cpuCycleIrqLatch;
 					break;
 				case 0x415B:
-					_cpuCycleIrqPending = false;
-					_cpuCycleIrqEnable = _cpuCycleIrqReset;
-					ClearIrq();
+					AcknowledgeCpuCycleIrq();
 					break;
 
 					// FPGA RAM auto R/W
