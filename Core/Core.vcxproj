@@ -564,7 +564,7 @@
     <ClInclude Include="Gameboy\Carts\GbMbc2.h" />
     <ClInclude Include="Gameboy\Carts\GbMbc3.h" />
     <ClInclude Include="Gameboy\Carts\GbMbc5.h" />
-	 <ClInclude Include="Gameboy\Carts\GbRainbow.h" />
+    <ClInclude Include="Gameboy\Carts\GbRainbow.h" />
     <ClInclude Include="Gameboy\GbMemoryManager.h" />
     <ClInclude Include="Gameboy\APU\GbNoiseChannel.h" />
     <ClInclude Include="Gameboy\GbPpu.h" />
@@ -1079,7 +1079,7 @@
       </AdditionalIncludeDirectories>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <DisableLanguageExtensions>true</DisableLanguageExtensions>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <ShowIncludes>
@@ -1112,7 +1112,7 @@
       </AdditionalIncludeDirectories>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <DisableLanguageExtensions>true</DisableLanguageExtensions>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ShowIncludes>
       </ShowIncludes>
