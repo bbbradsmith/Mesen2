@@ -1510,7 +1510,7 @@ protected:
 						return ReadFromChr(((addr & ~0x07) | (_windowSplitYPos & 0x07)) & 0xFFF);
 					case 2:	// extended tiles
 					case 3:	// extended attributes + tiles
-						return ReadFromChr(((_windowExtModeLastValue & 0x3F) << 12) + (((addr & ~0x07) | (_windowSplitYPos & 0x07)) & 0xFFF));
+						return ReadFromChr((_bgBankOffset * 0x40000) + ((_windowExtModeLastValue & 0x3F) << 12) + (((addr & ~0x07) | (_windowSplitYPos & 0x07)) & 0xFFF));
 				}
 			}
 		}
@@ -1576,7 +1576,7 @@ protected:
 								return InternalReadVram(addr);
 							case 2:	// extended tiles
 							case 3:	// extended attributes + tiles
-								return ReadFromChr(((_extModeLastValue & 0x3f) << 12) + (addr & 0xFFF));
+								return ReadFromChr((_bgBankOffset * 0x40000) + ((_extModeLastValue & 0x3f) << 12) + (addr & 0xFFF));
 						}
 				}
 			}
