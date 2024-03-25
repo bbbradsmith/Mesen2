@@ -54,6 +54,11 @@
 #define NT_FPGA_RAM			0b10
 #define NT_CHR_ROM			0b11
 
+#define OAM_PROC_DISABLE		0b00
+#define OAM_PROC_SLOW_CLEAR	0b01
+#define OAM_PROC_SLOW_UPDATE	0b10
+#define OAM_PROC_EXT_UPDATE	0b11
+
 class Rainbow : public BaseMapper
 {
 private:
@@ -165,6 +170,13 @@ private:
 	// FPGA RAM auto R/W
 	uint16_t _fpgaRamAutoRwAddress;
 	uint8_t _fpgaRamAutoRwIncrement;
+
+	// OAM PROCS
+	uint8_t _oamProc;
+	uint8_t _oamSlowUpdatePage;
+	uint8_t _oamExtUpdatePage;
+	uint8_t _oamIndex;
+	uint8_t _oamUpdateState;
 
 protected:
 	uint16_t GetPrgPageSize() override { return 0x1000; }
@@ -281,6 +293,11 @@ protected:
 		// Window Split
 		_windowModeEnabled = false;
 
+		// Slow OAM
+		_oamProc = OAM_PROC_DISABLE;
+		_oamSlowUpdatePage = 0x07;
+		_oamExtUpdatePage = 0x1B;
+
 		// ESP / WiFi
 		_espEnable = false;
 		EspClearMessageReceived();
@@ -301,13 +318,13 @@ protected:
 
 	void UpdatePrgBanks()
 	{
-
-		// $8000-$ffff
 		uint8_t t_prgRomMode = _bootrom ? PRG_ROM_MODE_3 : _prgRomMode;
 		PrgMemoryType ramMemoryType = HasBattery() ? PrgMemoryType::SaveRam : PrgMemoryType::WorkRam;
 		uint32_t ramSize = (HasBattery() ? _realSaveRamSize : _realWorkRamSize);
 		uint16_t prgOffset;
 		uint16_t mask;
+
+		// $8000-$ffff
 
 		// 32K
 		if(t_prgRomMode == PRG_ROM_MODE_0) {
@@ -322,7 +339,7 @@ protected:
 			}
 		}
 
-		// 2 x 16K
+		// 16K + 16K
 		if(t_prgRomMode == PRG_ROM_MODE_1) {
 			prgOffset = 0x4000;
 			if(_prg[3] & 0x8000) {
@@ -376,7 +393,7 @@ protected:
 			}
 		}
 
-		// 4 x 8K
+		// 8K + 8K + 8K + 8K
 		if(t_prgRomMode == PRG_ROM_MODE_3) {
 			prgOffset = 0x2000;
 			for(uint8_t i = 0; i < 4; i++) {
@@ -396,7 +413,7 @@ protected:
 			}
 		}
 
-		// 8 x 4K
+		// 4K + 4K + 4K + 4K + 4K + 4K + 4K + 4K
 		if(t_prgRomMode == PRG_ROM_MODE_4) {
 			prgOffset = 0x1000;
 			for(uint8_t i = 0; i < 8; i++) {
@@ -841,7 +858,7 @@ protected:
 		uint8_t prgIdx;
 		uint8_t t_prgRomMode = _bootrom ? PRG_ROM_MODE_3 : _prgRomMode;
 
-		if(addr >= 0x4100 && addr <= 0x47FF) {	// MAPPER REGISTERS
+		if(addr >= 0x4100 && addr <= 0x427F) {	// MAPPER REGISTERS
 			switch(addr) {
 
 				// PRG
@@ -892,6 +909,106 @@ protected:
 				}
 				case 0x4192: return _espMessageSent ? 0x80 : 0;
 			}
+		} else if(addr >= 0x4280 && addr <= 0x47FF) {	// OAM routines, auto-generated
+
+			if(_oamProc == OAM_PROC_DISABLE) {
+				switch(addr) {
+					case 0x4280:
+						_oamProc = OAM_PROC_SLOW_UPDATE;
+						_oamIndex = 0;
+						break;
+					case 0x4282:
+						_oamProc = OAM_PROC_EXT_UPDATE;
+						_oamIndex = 0;
+						_oamUpdateState = 0;
+						break;
+					case 0x4286:
+						_oamProc = OAM_PROC_SLOW_CLEAR;
+						break;
+				}
+			}
+
+			switch(_oamProc) {
+
+				case OAM_PROC_SLOW_CLEAR:
+
+					// lda #$00
+					if(addr == 0x4286) return 0xA9;	// LDA #imm		// $4286, entry point
+					if(addr == 0x4287) return 0x00;	// #$00 (OAM index starting point)
+
+					// tax, dex
+					if(addr == 0x4288) return 0xAA;	// TAX
+					if(addr == 0x4289) return 0xCA;	// DEX
+
+					// sta $2003
+					if(addr == 0x428A) return 0x8D;	// STA abs
+					if(addr == 0x428B) return 0x03;	// $03
+					if(addr == 0x428C) return 0x20;	// $20
+
+					// stx $2004
+					if(addr == 0x428D) return 0x8E;	// STX abs
+					if(addr == 0x428E) return 0x04;	// $04
+					if(addr == 0x428F) { _oamIndex = 0; return 0x20; }	// $20
+
+					// rts
+					if(addr == 0x4488) { _oamProc = OAM_PROC_DISABLE; return 0x60; }	// RTS	// $4488, exit point
+
+					// lda #imm (OAM index)
+					if((addr & 7) == 0) { _oamIndex = _oamIndex + 4; return 0xA9; }	// LDA #imm
+					if((addr & 7) == 1) return _oamIndex;	// OAM index
+
+					// sta $2003
+					if((addr & 7) == 2) return 0x8D;	// STA abs
+					if((addr & 7) == 3) return 0x03;	// $03
+					if((addr & 7) == 4) return 0x20;	// $20
+
+					// stx $2004
+					if((addr & 7) == 5) return 0x8E;	// STX abs
+					if((addr & 7) == 6) return 0x04;	// $04
+					if((addr & 7) == 7) return 0x20;	// $20
+
+					break;
+
+				case OAM_PROC_SLOW_UPDATE:
+
+					// rts
+					if(addr == 0x4785) { _oamProc = OAM_PROC_DISABLE; return 0x60; }	// RTS	// $4785, exit point
+
+					// lda #$00
+					if(addr == 0x4280) return 0xA9;	// LDA #imm		// $4280, entry point
+					if(addr == 0x4281) return 0x00;	// #$00 (OAM index starting point)
+
+					// sta $2003
+					if(addr == 0x4282) return 0x8D;	// STA abs
+					if(addr == 0x4283) return 0x03;	// $03
+					if(addr == 0x4284) { _oamUpdateState = 0; return 0x20; }	// $20
+
+					switch(_oamUpdateState) {
+						case 0: { _oamUpdateState = 1; return 0xA9; }	// LDA #imm
+						case 1: { _oamUpdateState = 2; return _fpgaRam[0x1800 + (_oamSlowUpdatePage * 0x100) + _oamIndex]; }	// OAM value in FPGA-RAM
+						case 2: { _oamUpdateState = 3; return 0x8D; }	// STA abs
+						case 3: { _oamUpdateState = 4; return 0x04; }	// $04
+						case 4: { _oamUpdateState = 0; _oamIndex = _oamIndex + 1; return 0x20; }	// $20
+					}
+
+					break;
+
+				case OAM_PROC_EXT_UPDATE:
+
+					// rts
+					if(addr == 0x43D1) { _oamProc = OAM_PROC_DISABLE; return 0x60; }	// RTS	// $43D1, exit point
+
+					switch(_oamUpdateState) {
+						case 0: { _oamUpdateState = 1; return 0xA9; }	// LDA #imm
+						case 1: { _oamUpdateState = 2; return _fpgaRam[0x1800 + (_oamExtUpdatePage * 0x40) + _oamIndex]; }	// OAM value in FPGA-RAM
+						case 2: { _oamUpdateState = 3; return 0x8D; }	// STA abs
+						case 3: { _oamUpdateState = 4; return _oamIndex; }	// OAM index
+						case 4: { _oamUpdateState = 0; _oamIndex = _oamIndex + 1; return 0x42; }	// $42
+					}
+
+					break;
+			}
+
 		} else if(addr >= 0x4800 && addr <= 0x5FFF) {	// FPGA-RAM Reads
 			return InternalReadRam(addr); // FPGA-RAM
 		} else if(addr >= 0x6000 && addr <= 0x7FFF) {	// PRG-RAM Reads, could be PRG-ROM, PRG-RAM, FPGA-RAM, we need to check
@@ -1236,9 +1353,11 @@ protected:
 				case 0x41FF: _bootrom = value & 0x01; UpdatePrgBanks(); break;
 
 					// Sprite Extended Mode
-				case 0x4240:
-					_spriteBankOffset = value & 0x07;
-					break;
+				case 0x4240: _spriteBankOffset = value & 0x07; break;
+
+					// Slow oam
+				case 0x4241: _oamSlowUpdatePage = value & 0x07; break;
+				case 0x4242: _oamExtUpdatePage = value & 0x1F; break;
 			}
 
 			// $4200-$423F Sprite 4K bank lower bits
