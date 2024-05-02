@@ -148,7 +148,6 @@ private:
 	uint8_t _scanlineIrqLatch;
 	uint8_t _scanlineIrqOffset;
 	uint8_t _scanlineIrqJitterCounter;
-	uint8_t _scanlineCounter;
 	uint16_t _dotCounter;
 
 	bool _needInFrame = false;
@@ -618,7 +617,7 @@ protected:
 				uint8_t spriteMinYPos = _rainbowMemoryHandler->GetSpriteYPos(_spriteCounter);
 				uint8_t spriteMaxYPos = _rainbowMemoryHandler->GetSpriteYPos(_spriteCounter) + (largeSprites ? 16 : 8);
 				if(_spriteIndex < 8 && _spriteCounter < 64) {
-					if(_scanlineCounter >= spriteMinYPos && _scanlineCounter < spriteMaxYPos) {
+					if(_scanlineIrqCounter >= spriteMinYPos && _scanlineIrqCounter < spriteMaxYPos) {
 						_spriteYOrder[_spriteIndex] = _spriteBank[_spriteCounter];
 						_spriteIndex++;
 					}
@@ -794,7 +793,6 @@ protected:
 		SV(_scanlineIrqLatch);
 		SV(_scanlineIrqOffset);
 		SV(_scanlineIrqJitterCounter);
-		SV(_scanlineCounter);
 		SV(_dotCounter);
 
 		SV(_needInFrame);
@@ -1478,11 +1476,11 @@ protected:
 			//After 3 identical NT reads, trigger IRQ when the following attribute byte is read
 			if(!_ppuInFrame && !_needInFrame) {
 				_needInFrame = true;
-				_scanlineCounter = 0;
+				_scanlineIrqCounter = 0;
 				_dotCounter = 0;
 				_windowSplitYPos = _windowYScroll;
 			} else {
-				_scanlineCounter++;
+				_scanlineIrqCounter++;
 				_spriteOrdering = true;
 				_spriteOrderingStep = 0;
 				_dotCounter = 0;
@@ -1543,7 +1541,7 @@ protected:
 		_lastPpuReadAddr = addr;
 		_scanlineIrqHblank = _dotCounter > 127;
 
-		if(_scanlineCounter == _scanlineIrqLatch && !_scanlineIrqPending) {
+		if(_scanlineIrqCounter == _scanlineIrqLatch && !_scanlineIrqPending) {
 			if(_dotCounter == _scanlineIrqOffset || (_scanlineIrqOffset == 0 && _dotCounter == 1)) {
 				_scanlineIrqPending = true;
 				_scanlineIrqJitterCounter = 0;
@@ -1578,8 +1576,8 @@ protected:
 						(tileX <= _windowXEndTile) | (tileX >= _windowXStartTile));
 
 					bool inWindowY = ((_windowYStart < _windowYEnd) ?
-						(_scanlineCounter >= _windowYStart) & (_scanlineCounter <= _windowYEnd) :
-						(_scanlineCounter <= _windowYEnd) | (_scanlineCounter >= _windowYStart));
+						(_scanlineIrqCounter >= _windowYStart) & (_scanlineIrqCounter <= _windowYEnd) :
+						(_scanlineIrqCounter <= _windowYEnd) | (_scanlineIrqCounter >= _windowYStart));
 
 					bool inWindow = inWindowX && inWindowY;
 					if(tileX <= 32 && inWindow) {
