@@ -994,7 +994,7 @@ protected:
 				case OAM_PROC_EXT_UPDATE:
 
 					// rts
-					if(addr == 0x43D1) { _oamProc = OAM_PROC_DISABLE; return 0x60; }	// RTS	// $43D1, exit point
+					if(addr == 0x43C2) { _oamProc = OAM_PROC_DISABLE; return 0x60; }	// RTS	// $43C2, exit point
 
 					switch(_oamUpdateState) {
 						case 0: { _oamUpdateState = 1; return 0xA9; }	// LDA #imm
