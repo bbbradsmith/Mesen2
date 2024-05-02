@@ -1260,7 +1260,11 @@ protected:
 					_scanlineIrqEnable = false;
 					ClearIrq();
 					break;
-				case 0x4153: _scanlineIrqOffset = value > 169 ? 169 : value; break;
+				case 0x4153: 
+					if(value > 170) _scanlineIrqOffset = 170;
+					else if(value == 0) _scanlineIrqOffset = 1;
+					else _scanlineIrqOffset = value;
+					break;
 
 					// CPU Cycle IRQ
 				case 0x4158:
