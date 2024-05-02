@@ -866,6 +866,7 @@ protected:
 				case 0x4120: return (_chrChip << 6) | (_chrSprExtMode << 5) | (_windowModeEnabled << 4) | _chrMode;
 
 					// PPU SCANLINE
+				case 0x4150: return _scanlineIrqCounter;
 				case 0x4151:
 				{
 					uint8_t rv = (_scanlineIrqHblank ? 0x80 : 0) | (_scanlineIrqInFrame ? 0x40 : 0 | (_scanlineIrqPending ? 0x01 : 0));
@@ -1847,7 +1848,7 @@ protected:
 				if(_chrRamSize == 0) return 0;
 				return _chrRam[pos & (_chrRamSize - 1)];
 			case CHR_CHIP_FPGA_RAM:
-				if(Rainbow::FpgaRamSize == 0) return 0;
+				if constexpr (Rainbow::FpgaRamSize == 0) return 0;
 				return _fpgaRam[pos & (FpgaRamSize - 1)];
 			default:
 				return 0;
