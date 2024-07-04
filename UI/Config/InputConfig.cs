@@ -261,7 +261,7 @@ namespace Mesen.Config
 		
 		public UInt16 Microphone;
 
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 100)]
+		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
 		public UInt16[] CustomKeys;
 	}
 
