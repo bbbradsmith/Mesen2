@@ -7,20 +7,22 @@ class KeyboardMouseHost : public BaseControlDevice
 {
 private:
 	uint32_t d3, d4;
-	uint8_t kbold[128/8];
+	uint8_t wheel_timeout;
 	bool relative;
+	uint8_t kbold[17];
 	EmuSettings* _settings = nullptr;
+	static const int FRAMES_PER_WHEEL = 15; // simulated mouse wheel roll speed
 
 protected:
 	string GetKeyNames() override
 	{
-		return "LRM.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890EeBTS-=[]\\#;'`,./C123456789012PSpIHUDEDRLDUN/*-+E1234567890.|CRKYHM,HhKHZPS<>UDMCSAWcsaw";
+		return "LRMudRP.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890EeBTS-=[]\\#;'`,./C123456789012PSpIHUDEDRLDUN/*-+E1234567890.|CRKYHM,HhKHZPS<>UDMCSAWcsaw";
 	}
 
 	enum Buttons
 	{
-		MouseLeft, MouseRight, MouseMiddle,
-		Undefined,
+		MouseLeft, MouseRight, MouseMiddle, MouseWheelUp, MouseWheelDown,
+		Rollover, PostFail, Undefined,
 		A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 		Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9, Num0,
 		Enter, Esc, Backspace, Tab, Space, Minus, Equal, LeftBracket, RightBracket,
@@ -44,14 +46,12 @@ protected:
 	void Serialize(Serializer& s) override
 	{
 		BaseControlDevice::Serialize(s);
-		SV(d3); SV(d4); SVArray(kbold,128/8); SV(relative);
+		SV(d3); SV(d4); SV(wheel_timeout); SV(relative); SVArray(kbold,17);
 	}
 
 	void InternalSetStateFromInput() override
 	{
 		bool mouse_on = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
-		bool key_on = _settings->GetNesConfig().KeyboardMouseHostKeyOn;
-
 		if (mouse_on) {
 			relative = _settings->GetNesConfig().KeyboardMouseHostRelative;
 			if (relative) {
@@ -61,12 +61,9 @@ protected:
 			}
 		}
 
-		if (key_on) {
-			for (KeyMapping& keyMapping : _keyMappings) {
-				// mouse buttons
-				for (int i = 0; i < 128; i++) {
-					SetPressedState(i, keyMapping.CustomKeys[i]);
-				}
+		for (KeyMapping& keyMapping : _keyMappings) {
+			for (int i = 0; i <= Buttons::RightWin; i++) {
+				SetPressedState(i, keyMapping.CustomKeys[i]);
 			}
 		}
 	}
@@ -76,8 +73,9 @@ public:
 	{
 		d3 = 0;
 		d4 = 0;
-		for (int i = 0; i < 128/8; i++) kbold[i] = 0;
+		wheel_timeout = 0;
 		relative = false;
+		for (int i = 0; i < 17; i++) kbold[i] = 0;
 		_settings = _emu->GetSettings();
 	}
 
@@ -132,28 +130,42 @@ public:
 				my = std::clamp(int(pos.Y),0,255);
 			}
 			ms = IsPressed(Buttons::MouseMiddle) ? 0x80 : 00;
-			// Scroll wheel is not supported by Mesen
+			// scroll wheel simulated with a rate-limiting timeout on a button/key hold
+			if (wheel_timeout > 0) {
+				wheel_timeout--;
+			} else {
+				bool wu = IsPressed(Buttons::MouseWheelUp);
+				bool wd = IsPressed(Buttons::MouseWheelDown);
+				if (wu || wd) {
+					uint8_t w = 0;
+					if (wu) w--;
+					if (wd) w++;
+					wheel_timeout = FRAMES_PER_WHEEL;
+					ms |= (w & 0x80) >> 1; // sign bit
+					ms |= (w & 0x0F) << 3; // value
+				}
+			}
 		}
 
 		uint8_t khit[4] = { 0 };
 		if (key_on) {
-			// Transfer changed keys into hit buffer
-			uint8_t kbnew[128/8] = { 0 };
+			// Transfer changed keys into make/break scancode buffer
+			uint8_t kbnew[17] = { 0 };
 			int hits = 0;
-			for (int i = 4; i < 128; i++) {
+			for (int i = Buttons::Rollover; i <= Buttons::RightWin; i++) {
 				int ibyte = i / 8;
 				uint8_t ibit = 1 << (i % 8);
-				if (IsPressed(i)) kbnew[ibyte] |= ibit;
+				if (IsPressed(i)) kbnew[ibyte] |= ibit; // make/break high bit
 				if ((kbnew[ibyte] ^ kbold[ibyte]) & ibit) {
 					if (hits < 4) {
-						khit[hits] = i | ((kbnew[ibyte] & ibit) ? 0x00 : 0x80);
+						khit[hits] = (i+1-Buttons::Rollover) | ((kbnew[ibyte] & ibit) ? 0x00 : 0x80); // scancode
 						hits++;
 					} else {
 						kbnew[ibyte] ^= ibit; // too many keys this frame, pass to next frame
 					}
 				}
 			}
-			for (int i = 0; i < 128/8; i++) kbold[i] = kbnew[i];
+			for (int i = 0; i < 17; i++) kbold[i] = kbnew[i];
 		}
 
 		d3 = (khit[0] << 24) | (khit[1] << 16) | (khit[2] << 8) | (khit[3] << 0);

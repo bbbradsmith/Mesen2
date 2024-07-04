@@ -260,14 +260,14 @@ struct KeyMapping
 	
 	uint16_t Microphone = 0;
 
-	uint16_t CustomKeys[128] = {};
+	uint16_t CustomKeys[140] = {};
 
 	bool HasKeySet()
 	{
 		if(A || B || X || Y || L || R || Up || Down || Left || Right || Start || Select || TurboA || TurboB || TurboX || TurboY || TurboL || TurboR || TurboStart || TurboSelect || Microphone) {
 			return true;
 		}
-		for(uint32_t i = 0; i < 128; i++) {
+		for(uint32_t i = 0; i < 140; i++) {
 			if(CustomKeys[i] != 0) {
 				return true;
 			}

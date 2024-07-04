@@ -162,7 +162,7 @@ namespace Mesen.Config
 					break;
 
 				case ControllerType.KeyboardMouseHost:
-					KeyboardMouseHostButtons = new UInt16[128];
+					KeyboardMouseHostButtons = new UInt16[132];
 					break;
 
 				case ControllerType.VbController:
@@ -356,11 +356,13 @@ namespace Mesen.Config
 					};
 
 				case ControllerType.KeyboardMouseHost:
-					return new UInt16[128] {
+					return new UInt16[132] {
 						InputApi.GetKeyCode("Mouse Left"),
 						InputApi.GetKeyCode("Mouse Right"),
 						InputApi.GetKeyCode("Mouse Middle"),
-						0, // undefined
+						0, // Mouse Wheel Up
+						0, // Mouse Wheel Down
+						0,0,0, // Rollover, Post fail, Undefined error
 						InputApi.GetKeyCode("A"), InputApi.GetKeyCode("B"), InputApi.GetKeyCode("C"), InputApi.GetKeyCode("D"),
 						InputApi.GetKeyCode("E"), InputApi.GetKeyCode("F"), InputApi.GetKeyCode("G"), InputApi.GetKeyCode("H"),
 						InputApi.GetKeyCode("I"), InputApi.GetKeyCode("J"), InputApi.GetKeyCode("K"), InputApi.GetKeyCode("L"),
@@ -378,7 +380,7 @@ namespace Mesen.Config
 						InputApi.GetKeyCode("Space"),
 						InputApi.GetKeyCode("-"), InputApi.GetKeyCode("="), InputApi.GetKeyCode("["), InputApi.GetKeyCode("]"),
 						InputApi.GetKeyCode("\\"),
-						0, // non-US # ~
+						0, // Non-US # ~
 						InputApi.GetKeyCode(";"), InputApi.GetKeyCode("'"), InputApi.GetKeyCode("`"), InputApi.GetKeyCode(","),
 						InputApi.GetKeyCode("."), InputApi.GetKeyCode("/"), InputApi.GetKeyCode("Caps Lock"),
 						InputApi.GetKeyCode("F1"), InputApi.GetKeyCode("F2"), InputApi.GetKeyCode("F3"), InputApi.GetKeyCode("F4"),
@@ -398,7 +400,7 @@ namespace Mesen.Config
 						InputApi.GetKeyCode("Numpad 5"), InputApi.GetKeyCode("Numpad 6"), InputApi.GetKeyCode("Numpad 7"), InputApi.GetKeyCode("Numpad 8"),
 						InputApi.GetKeyCode("Numpad 9"), InputApi.GetKeyCode("Numpad 0"),
 						InputApi.GetKeyCode("Numpad ."),
-						0, // non-US \ |
+						0, // Non-US \ |
 						InputApi.GetKeyCode("Start Application 1"),
 						0, // RO
 						InputApi.GetKeyCode("Kana Mode"),
@@ -577,8 +579,8 @@ namespace Mesen.Config
 
 	public enum NesKeyboardMouseHostButtons
 	{
-		MouseLeft, MouseRight, MouseMiddle,
-		Undefined,
+		MouseLeft, MouseRight, MouseMiddle, MouseWheelUp, MouseWheelDown,
+		Rollover, PostFail, Undefined,
 		A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 		Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9, Num0,
 		Enter, Esc, Backspace, Tab, Space, Minus, Equal, LeftBracket, RightBracket,

@@ -106,7 +106,7 @@ namespace Mesen.Config
 			}
 
 			if(customKeys != null) {
-				mappings.CustomKeys = new UInt16[128];
+				mappings.CustomKeys = new UInt16[140];
 				for(int i = 0; i < customKeys.Length; i++) {
 					mappings.CustomKeys[i] = customKeys[i];
 				}
@@ -261,7 +261,7 @@ namespace Mesen.Config
 		
 		public UInt16 Microphone;
 
-		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
+		[MarshalAs(UnmanagedType.ByValArray, SizeConst = 140)]
 		public UInt16[] CustomKeys;
 	}
 
