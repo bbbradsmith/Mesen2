@@ -145,6 +145,8 @@ public:
 					ms |= (w & 0x0F) << 3; // value
 				}
 			}
+		} else {
+			status &= 0x3F; // Suppress mouse buttons
 		}
 
 		uint8_t khit[4] = { 0 };
@@ -155,13 +157,13 @@ public:
 			for (int i = Buttons::Rollover; i <= Buttons::RightWin; i++) {
 				int ibyte = i / 8;
 				uint8_t ibit = 1 << (i % 8);
-				if (IsPressed(i)) kbnew[ibyte] |= ibit; // make/break high bit
+				if (IsPressed(i)) kbnew[ibyte] |= ibit; // Make/break high bit
 				if ((kbnew[ibyte] ^ kbold[ibyte]) & ibit) {
 					if (hits < 4) {
-						khit[hits] = (i+1-Buttons::Rollover) | ((kbnew[ibyte] & ibit) ? 0x00 : 0x80); // scancode
+						khit[hits] = (i+1-Buttons::Rollover) | ((kbnew[ibyte] & ibit) ? 0x00 : 0x80); // Scancode
 						hits++;
 					} else {
-						kbnew[ibyte] ^= ibit; // too many keys this frame, pass to next frame
+						kbnew[ibyte] ^= ibit; // Too many keys this frame, defer to next frame
 					}
 				}
 			}
