@@ -57,7 +57,12 @@ protected:
 			if (relative) {
 				SetMovement(KeyManager::GetMouseMovement(_emu, _settings->GetInputConfig().MouseSensitivity));
 			} else {
-				SetCoordinates(KeyManager::GetMousePosition());
+				MousePosition pos = KeyManager::GetMousePosition();
+				if (pos.X < 0 || pos.Y < 0) { // Indicate offscreen with 255,255
+					pos.X = 255;
+					pos.Y = 255;
+				}
+				SetCoordinates(pos);
 			}
 		}
 
