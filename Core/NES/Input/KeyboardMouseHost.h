@@ -7,7 +7,6 @@ class KeyboardMouseHost : public BaseControlDevice
 {
 private:
 	uint32_t d3, d4;
-	uint8_t rmx, rmy;
 	uint8_t kbold[128/8];
 
 	EmuSettings* _settings = nullptr;
@@ -50,7 +49,7 @@ protected:
 	void Serialize(Serializer& s) override
 	{
 		BaseControlDevice::Serialize(s);
-		SV(d3); SV(d4); SV(rmx); SV(rmy); SVArray(kbold,128/8);
+		SV(d3); SV(d4); SVArray(kbold,128/8);
 	}
 
 	void InternalSetStateFromInput() override
@@ -104,22 +103,19 @@ public:
 	{
 		uint8_t status = 0x06 | // device ID
 			(relative ? 0x08 : 0x00) |
-			(kb_on    ? 0x01 : 0x00) |
-			(mouse_on ? 0x02 : 0x00) |
+			(kb_on    ? 0x10 : 0x00) |
+			(mouse_on ? 0x20 : 0x00) |
 			(IsPressed(Buttons::MouseRight) ? 0x40 : 0x00) |
 			(IsPressed(Buttons::MouseLeft)  ? 0x80 : 0x00);
 
 		uint8_t mx, my;
 		if (relative) {
 			MouseMovement mov = GetMovement();
-			int newx = std::clamp(int(rmx) + mov.dx,0,255);
-			int newy = std::clamp(int(rmy) + mov.dy,0,255);
-			int8_t rx = std::clamp(newx - int(rmx),-128,127);
-			int8_t ry = std::clamp(newy - int(rmy),-128,127);
+	MessageManager::Log("mov: " + std::to_string(mov.dx) + "," + std::to_string(mov.dy));
+			int8_t rx = std::clamp(int(mov.dx),-128,127);
+			int8_t ry = std::clamp(int(mov.dy),-128,127);
 			mx = uint8_t(rx); // reinterpret signed difference as unsigned
 			my = uint8_t(ry);
-			rmx = uint8_t(newx);
-			rmy = uint8_t(newy);
 		} else {
 			MousePosition pos = GetCoordinates();
 			mx = std::clamp(int(pos.X),0,255);
