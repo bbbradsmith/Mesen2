@@ -580,6 +580,10 @@ struct NesConfig
 
 	uint32_t LightDetectionRadius = 0;
 	bool AutoConfigureInput = true;
+	bool KeyboardMouseHostRelative = false;
+	bool KeyboardMouseHostMouseOn = true;
+	bool KeyboardMouseHostKeyOn = true;
+	bool KeyboardMouseHostPort = true;
 
 	ConsoleRegion Region = ConsoleRegion::Auto;
 	bool EnableHdPacks = true;

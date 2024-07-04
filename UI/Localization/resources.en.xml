@@ -51,7 +51,13 @@
 			<Control ID="lblLightDetectionRadius">Light detection radius for light guns:</Control>
 			<Control ID="lblSmall">Small</Control>
 			<Control ID="lblLarge">Large</Control>
-			
+
+			<Control ID="grpKeyboardMouseHostRelative">Keyboard Mouse Host</Control>
+			<Control ID="chkKeyboardMouseHostRelative">Relative motion</Control>
+			<Control ID="chkKeyboardMouseHostMouseOn">Enable Mouse</Control>
+			<Control ID="chkKeyboardMouseHostKeyOn">Enable Keyboard</Control>
+			<Control ID="chkKeyboardMouseHostPort">Port 2 ($4017)</Control>
+
 			<Control ID="grpHardware">Hardware buttons</Control>
 
 			<Control ID="lblFourScoreConfig">Four Score Configuration</Control>

@@ -31,6 +31,10 @@ namespace Mesen.Config
 
 		[Reactive][MinMax(0, 3)] public UInt32 LightDetectionRadius { get; set; } = 0;
 		[Reactive] public bool AutoConfigureInput { get; set; } = true;
+		[Reactive] public bool KeyboardMouseHostRelative { get; set; } = false;
+		[Reactive] public bool KeyboardMouseHostMouseOn { get; set; } = true;
+		[Reactive] public bool KeyboardMouseHostKeyOn { get; set; } = true;
+		[Reactive] public bool KeyboardMouseHostPort { get; set; } = true;
 
 		//General
 		[ValidValues(ConsoleRegion.Auto, ConsoleRegion.Ntsc, ConsoleRegion.Pal, ConsoleRegion.Dendy)]
@@ -148,6 +152,10 @@ namespace Mesen.Config
 
 				LightDetectionRadius = LightDetectionRadius,
 				AutoConfigureInput = AutoConfigureInput,
+				KeyboardMouseHostRelative = KeyboardMouseHostRelative,
+				KeyboardMouseHostMouseOn = KeyboardMouseHostMouseOn,
+				KeyboardMouseHostKeyOn = KeyboardMouseHostKeyOn,
+				KeyboardMouseHostPort = KeyboardMouseHostPort,
 
 				Region = Region,
 				EnableHdPacks = EnableHdPacks,
@@ -314,6 +322,10 @@ namespace Mesen.Config
 
 		public UInt32 LightDetectionRadius;
 		[MarshalAs(UnmanagedType.I1)] public bool AutoConfigureInput;
+		[MarshalAs(UnmanagedType.I1)] public bool KeyboardMouseHostRelative;
+		[MarshalAs(UnmanagedType.I1)] public bool KeyboardMouseHostMouseOn;
+		[MarshalAs(UnmanagedType.I1)] public bool KeyboardMouseHostKeyOn;
+		[MarshalAs(UnmanagedType.I1)] public bool KeyboardMouseHostPort;
 
 		public ConsoleRegion Region;
 		[MarshalAs(UnmanagedType.I1)] public bool EnableHdPacks;

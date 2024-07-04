@@ -8,13 +8,8 @@ class KeyboardMouseHost : public BaseControlDevice
 private:
 	uint32_t d3, d4;
 	uint8_t kbold[128/8];
-
+	bool relative;
 	EmuSettings* _settings = nullptr;
-
-	static const bool relative = false; // TODO setting
-	static const bool kb_on = true; // TODO setting
-	static const bool mouse_on = true; // TODO setting
-	static const int port = 0; // TODO setting
 
 protected:
 	string GetKeyNames() override
@@ -49,21 +44,29 @@ protected:
 	void Serialize(Serializer& s) override
 	{
 		BaseControlDevice::Serialize(s);
-		SV(d3); SV(d4); SVArray(kbold,128/8);
+		SV(d3); SV(d4); SVArray(kbold,128/8); SV(relative);
 	}
 
 	void InternalSetStateFromInput() override
 	{
-		if (relative) {
-			SetMovement(KeyManager::GetMouseMovement(_emu, _settings->GetInputConfig().MouseSensitivity));
-		} else {
-			SetCoordinates(KeyManager::GetMousePosition());
+		bool mouse_on = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
+		bool key_on = _settings->GetNesConfig().KeyboardMouseHostKeyOn;
+
+		if (mouse_on) {
+			relative = _settings->GetNesConfig().KeyboardMouseHostRelative;
+			if (relative) {
+				SetMovement(KeyManager::GetMouseMovement(_emu, _settings->GetInputConfig().MouseSensitivity));
+			} else {
+				SetCoordinates(KeyManager::GetMousePosition());
+			}
 		}
 
-		for (KeyMapping& keyMapping : _keyMappings) {
-			// mouse buttons
-			for (int i = 0; i < 128; i++) {
-				SetPressedState(i, keyMapping.CustomKeys[i]);
+		if (key_on) {
+			for (KeyMapping& keyMapping : _keyMappings) {
+				// mouse buttons
+				for (int i = 0; i < 128; i++) {
+					SetPressedState(i, keyMapping.CustomKeys[i]);
+				}
 			}
 		}
 	}
@@ -74,13 +77,15 @@ public:
 		d3 = 0;
 		d4 = 0;
 		for (int i = 0; i < 128/8; i++) kbold[i] = 0;
+		relative = false;
 		_settings = _emu->GetSettings();
 	}
 
 	uint8_t ReadRam(uint16_t addr) override
 	{
+		const uint16_t port = _settings->GetNesConfig().KeyboardMouseHostPort ? 0x4017 : 0x4016;
 		uint8_t output = 0;
-		if(addr == (0x4016 + port)) {
+		if(addr == port) {
 			output |= (d3 & 0x80000000) >> (31-3);
 			output |= (d4 & 0x80000000) >> (31-4);
 			d3 <<= 1;
@@ -101,47 +106,55 @@ public:
 
 	void RefreshStateBuffer() override
 	{
+		bool mouse_on = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
+		bool key_on = _settings->GetNesConfig().KeyboardMouseHostKeyOn;
+
 		uint8_t status = 0x06 | // device ID
 			(relative ? 0x08 : 0x00) |
-			(kb_on    ? 0x10 : 0x00) |
+			(key_on   ? 0x10 : 0x00) |
 			(mouse_on ? 0x20 : 0x00) |
 			(IsPressed(Buttons::MouseRight) ? 0x40 : 0x00) |
 			(IsPressed(Buttons::MouseLeft)  ? 0x80 : 0x00);
 
-		uint8_t mx, my;
-		if (relative) {
-			MouseMovement mov = GetMovement();
-	MessageManager::Log("mov: " + std::to_string(mov.dx) + "," + std::to_string(mov.dy));
-			int8_t rx = std::clamp(int(mov.dx),-128,127);
-			int8_t ry = std::clamp(int(mov.dy),-128,127);
-			mx = uint8_t(rx); // reinterpret signed difference as unsigned
-			my = uint8_t(ry);
-		} else {
-			MousePosition pos = GetCoordinates();
-			mx = std::clamp(int(pos.X),0,255);
-			my = std::clamp(int(pos.Y),0,255);
+		uint8_t mx = 0;
+		uint8_t my = 0;
+		uint8_t ms = 0;
+		if (mouse_on) {
+			if (relative) {
+				MouseMovement mov = GetMovement();
+				int8_t rx = std::clamp(int(mov.dx),-128,127);
+				int8_t ry = std::clamp(int(mov.dy),-128,127);
+				mx = uint8_t(rx); // reinterpret signed difference as unsigned
+				my = uint8_t(ry);
+			} else {
+				MousePosition pos = GetCoordinates();
+				mx = std::clamp(int(pos.X),0,255);
+				my = std::clamp(int(pos.Y),0,255);
+			}
+			ms = IsPressed(Buttons::MouseMiddle) ? 0x80 : 00;
+			// Scroll wheel is not supported by Mesen
 		}
-		uint8_t ms = IsPressed(Buttons::MouseMiddle) ? 0x80 : 00;
-		// Scroll wheel is not supported by Mesen
 
-		// Transfer changed keys into hit buffer
 		uint8_t khit[4] = { 0 };
-		uint8_t kbnew[128/8] = { 0 };
-		int hits = 0;
-		for (int i = 4; i < 128; i++) {
-			int ibyte = i / 8;
-			uint8_t ibit = 1 << (i % 8);
-			if (IsPressed(i)) kbnew[ibyte] |= ibit;
-			if ((kbnew[ibyte] ^ kbold[ibyte]) & ibit) {
-				if (hits < 4) {
-					khit[hits] = i | ((kbnew[ibyte] & ibit) ? 0x00 : 0x80);
-					hits++;
-				} else {
-					kbnew[ibyte] ^= ibit; // too many keys this frame, pass to next frame
+		if (key_on) {
+			// Transfer changed keys into hit buffer
+			uint8_t kbnew[128/8] = { 0 };
+			int hits = 0;
+			for (int i = 4; i < 128; i++) {
+				int ibyte = i / 8;
+				uint8_t ibit = 1 << (i % 8);
+				if (IsPressed(i)) kbnew[ibyte] |= ibit;
+				if ((kbnew[ibyte] ^ kbold[ibyte]) & ibit) {
+					if (hits < 4) {
+						khit[hits] = i | ((kbnew[ibyte] & ibit) ? 0x00 : 0x80);
+						hits++;
+					} else {
+						kbnew[ibyte] ^= ibit; // too many keys this frame, pass to next frame
+					}
 				}
 			}
+			for (int i = 0; i < 128/8; i++) kbold[i] = kbnew[i];
 		}
-		for (int i = 0; i < 128/8; i++) kbold[i] = kbnew[i];
 
 		d3 = (khit[0] << 24) | (khit[1] << 16) | (khit[2] << 8) | (khit[3] << 0);
 		d4 = (status << 24) | (mx << 16) | (my << 8) | (ms << 0);

@@ -181,6 +181,12 @@
 					</Grid>
 				</Grid>
 			</c:OptionSection>
+			<c:OptionSection Header="{l:Translate grpKeyboardMouseHostRelative}">
+				<CheckBox IsChecked="{Binding Config.KeyboardMouseHostRelative}" Content="{l:Translate chkKeyboardMouseHostRelative}" />
+				<CheckBox IsChecked="{Binding Config.KeyboardMouseHostMouseOn}" Content="{l:Translate chkKeyboardMouseHostMouseOn}" />
+				<CheckBox IsChecked="{Binding Config.KeyboardMouseHostKeyOn}" Content="{l:Translate chkKeyboardMouseHostKeyOn}" />
+				<CheckBox IsChecked="{Binding Config.KeyboardMouseHostPort}" Content="{l:Translate chkKeyboardMouseHostPort}" />
+			</c:OptionSection>
 			<c:OptionSection Header="{l:Translate grpHardware}">
 				<v:ShortcutKeysTabView HeaderMargin="0 0 0 0" Margin="0 0 10 0" ShortcutKeys="{Binding ShortcutKeys}" />
 			</c:OptionSection>
