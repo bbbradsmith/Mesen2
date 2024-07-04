@@ -590,6 +590,9 @@ void NesConsole::InitializeInputDevices(GameInputType inputType, GameSystem syst
 		log("[Input] 2 SNES controllers connected");
 		port1 = ControllerType::SnesController;
 		port2 = ControllerType::SnesController;
+	} else if(inputType == GameInputType::KeyboardMouseHost) {
+		log("[Input] Keyboard Mouse Host connected");
+		expDevice = ControllerType::KeyboardMouseHost;
 	} else {
 		log("[Input] 2 NES controllers connected");
 	}

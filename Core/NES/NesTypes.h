@@ -424,6 +424,7 @@ enum class GameInputType
 	SnesControllers = 0x2B,
 	RacermateBicycle = 0x2C, //not supported yet
 	UForce = 0x2D, //not supported yet
+	KeyboardMouseHost = 0x2E,
 	LastEntry
 };
 

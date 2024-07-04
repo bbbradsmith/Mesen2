@@ -32,6 +32,7 @@ namespace Mesen.Config
 		public UInt16[]? ExcitingBoxingButtons { get; set; } = null;
 		public UInt16[]? JissenMahjongButtons { get; set; } = null;
 		public UInt16[]? SuborKeyboardButtons { get; set; } = null;
+		public UInt16[]? KeyboardMouseHostButtons { get; set; } = null;
 		public UInt16[]? BandaiMicrophoneButtons { get; set; } = null;
 		public UInt16[]? VirtualBoyButtons { get; set; } = null;
 		public UInt16[]? KonamiHyperShotButtons { get; set; } = null;
@@ -63,6 +64,7 @@ namespace Mesen.Config
 				ControllerType.ExcitingBoxing => ExcitingBoxingButtons,
 				ControllerType.JissenMahjong => JissenMahjongButtons,
 				ControllerType.SuborKeyboard => SuborKeyboardButtons,
+				ControllerType.KeyboardMouseHost => KeyboardMouseHostButtons,
 				ControllerType.VbController => VirtualBoyButtons,
 				ControllerType.KonamiHyperShot => KonamiHyperShotButtons,
 				ControllerType.FamicomArkanoidController => ArkanoidButtons,
@@ -108,6 +110,7 @@ namespace Mesen.Config
 				ControllerType.ExcitingBoxing => Enum.GetValues<NesExcitingBoxingButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
 				ControllerType.JissenMahjong => Enum.GetValues<NesJissenMahjongButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
 				ControllerType.SuborKeyboard => Enum.GetValues<NesSuborKeyboardButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
+				ControllerType.KeyboardMouseHost => Enum.GetValues<NesKeyboardMouseHostButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
 				ControllerType.VbController => Enum.GetValues<NesVirtualBoyButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
 				ControllerType.KonamiHyperShot => Enum.GetValues<NesKonamiHyperShotButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
 				ControllerType.NesArkanoidController or ControllerType.FamicomArkanoidController => Enum.GetValues<NesArkanoidButtons>().Select(val => new CustomKeyMapping(ResourceHelper.GetEnumText(val), buttonMappings, (int)val)).ToList(),
@@ -156,6 +159,10 @@ namespace Mesen.Config
 
 				case ControllerType.SuborKeyboard:
 					SuborKeyboardButtons = new UInt16[99];
+					break;
+
+				case ControllerType.KeyboardMouseHost:
+					KeyboardMouseHostButtons = new UInt16[128];
 					break;
 
 				case ControllerType.VbController:
@@ -348,6 +355,69 @@ namespace Mesen.Config
 						0,0,0
 					};
 
+				case ControllerType.KeyboardMouseHost:
+					return new UInt16[128] {
+						InputApi.GetKeyCode("Mouse Left"),
+						InputApi.GetKeyCode("Mouse Right"),
+						InputApi.GetKeyCode("Mouse Middle"),
+						0, // undefined
+						InputApi.GetKeyCode("A"), InputApi.GetKeyCode("B"), InputApi.GetKeyCode("C"), InputApi.GetKeyCode("D"),
+						InputApi.GetKeyCode("E"), InputApi.GetKeyCode("F"), InputApi.GetKeyCode("G"), InputApi.GetKeyCode("H"),
+						InputApi.GetKeyCode("I"), InputApi.GetKeyCode("J"), InputApi.GetKeyCode("K"), InputApi.GetKeyCode("L"),
+						InputApi.GetKeyCode("M"), InputApi.GetKeyCode("N"), InputApi.GetKeyCode("O"), InputApi.GetKeyCode("P"),
+						InputApi.GetKeyCode("Q"), InputApi.GetKeyCode("R"), InputApi.GetKeyCode("S"), InputApi.GetKeyCode("T"),
+						InputApi.GetKeyCode("U"), InputApi.GetKeyCode("V"), InputApi.GetKeyCode("W"), InputApi.GetKeyCode("X"),
+						InputApi.GetKeyCode("Y"), InputApi.GetKeyCode("Z"), 
+						InputApi.GetKeyCode("1"), InputApi.GetKeyCode("2"), InputApi.GetKeyCode("3"), InputApi.GetKeyCode("4"),
+						InputApi.GetKeyCode("5"), InputApi.GetKeyCode("6"), InputApi.GetKeyCode("7"), InputApi.GetKeyCode("8"),
+						InputApi.GetKeyCode("9"), InputApi.GetKeyCode("0"),
+						InputApi.GetKeyCode("Enter"),
+						InputApi.GetKeyCode("Esc"),
+						InputApi.GetKeyCode("Backspace"),
+						InputApi.GetKeyCode("Tab"),
+						InputApi.GetKeyCode("Space"),
+						InputApi.GetKeyCode("-"), InputApi.GetKeyCode("="), InputApi.GetKeyCode("["), InputApi.GetKeyCode("]"),
+						InputApi.GetKeyCode("\\"),
+						0, // non-US # ~
+						InputApi.GetKeyCode(";"), InputApi.GetKeyCode("'"), InputApi.GetKeyCode("`"), InputApi.GetKeyCode(","),
+						InputApi.GetKeyCode("."), InputApi.GetKeyCode("/"), InputApi.GetKeyCode("Caps Lock"),
+						InputApi.GetKeyCode("F1"), InputApi.GetKeyCode("F2"), InputApi.GetKeyCode("F3"), InputApi.GetKeyCode("F4"),
+						InputApi.GetKeyCode("F5"), InputApi.GetKeyCode("F6"), InputApi.GetKeyCode("F7"), InputApi.GetKeyCode("F8"),
+						InputApi.GetKeyCode("F9"), InputApi.GetKeyCode("F10"), InputApi.GetKeyCode("F11"), InputApi.GetKeyCode("F12"),
+						InputApi.GetKeyCode("Print Screen"),
+						InputApi.GetKeyCode("Scroll Lock"),
+						InputApi.GetKeyCode("Pause"),
+						InputApi.GetKeyCode("Insert"), InputApi.GetKeyCode("Home"), InputApi.GetKeyCode("Page Up"),
+						InputApi.GetKeyCode("Delete"), InputApi.GetKeyCode("End"), InputApi.GetKeyCode("Page Down"),
+						InputApi.GetKeyCode("Right Arrow"), InputApi.GetKeyCode("Left Arrow"), InputApi.GetKeyCode("Down Arrow"), InputApi.GetKeyCode("Up Arrow"),
+						InputApi.GetKeyCode("Num Lock"),
+						InputApi.GetKeyCode("Numpad /"), InputApi.GetKeyCode("Numpad *"),
+						InputApi.GetKeyCode("Numpad -"), InputApi.GetKeyCode("Numpad +"),
+						0, // Numpad Enter
+						InputApi.GetKeyCode("Numpad 1"), InputApi.GetKeyCode("Numpad 2"), InputApi.GetKeyCode("Numpad 3"), InputApi.GetKeyCode("Numpad 4"),
+						InputApi.GetKeyCode("Numpad 5"), InputApi.GetKeyCode("Numpad 6"), InputApi.GetKeyCode("Numpad 7"), InputApi.GetKeyCode("Numpad 8"),
+						InputApi.GetKeyCode("Numpad 9"), InputApi.GetKeyCode("Numpad 0"),
+						InputApi.GetKeyCode("Numpad ."),
+						0, // non-US \ |
+						InputApi.GetKeyCode("Start Application 1"),
+						0, // RO
+						InputApi.GetKeyCode("Kana Mode"),
+						0, // Yen
+						0, // Henkan
+						0, // Muhenkan
+						0, // KPJPCOMMA
+						0, // Hangeul
+						0, // Hanja
+						0, // Katakana
+						0, // Hiragana
+						0, // Zenkaku Hankaku
+						InputApi.GetKeyCode("Play/Pause"), InputApi.GetKeyCode("Stop"),
+						InputApi.GetKeyCode("Previous Track"), InputApi.GetKeyCode("Next Track"),
+						InputApi.GetKeyCode("Volume Up"), InputApi.GetKeyCode("Volume Down"), InputApi.GetKeyCode("Volume Mute"),
+						InputApi.GetKeyCode("Left Ctrl"), InputApi.GetKeyCode("Left Shift"), InputApi.GetKeyCode("Left Alt"), InputApi.GetKeyCode("Left Win"),
+						InputApi.GetKeyCode("Right Ctrl"), InputApi.GetKeyCode("Right Shift"), InputApi.GetKeyCode("Right Alt"), InputApi.GetKeyCode("Right Win"),
+					};
+
 				case ControllerType.VbController:
 					return new UInt16[14] {
 						InputApi.GetKeyCode("K"),
@@ -421,6 +491,7 @@ namespace Mesen.Config
 				case ControllerType.ExcitingBoxing: ExcitingBoxingButtons = GetDefaultCustomKeys(type); break;
 				case ControllerType.JissenMahjong: JissenMahjongButtons = GetDefaultCustomKeys(type); break;
 				case ControllerType.SuborKeyboard: SuborKeyboardButtons = GetDefaultCustomKeys(type); break;
+				case ControllerType.KeyboardMouseHost: KeyboardMouseHostButtons = GetDefaultCustomKeys(type); break;
 				case ControllerType.VbController: VirtualBoyButtons = GetDefaultCustomKeys(type); break;
 				case ControllerType.KonamiHyperShot: KonamiHyperShotButtons = GetDefaultCustomKeys(type); break;
 				
@@ -502,5 +573,27 @@ namespace Mesen.Config
 		PageUp, PageDown,
 		Up, Down, Left, Right,
 		Unknown1, Unknown2, Unknown3,
+	};
+
+	public enum NesKeyboardMouseHostButtons
+	{
+		MouseLeft, MouseRight, MouseMiddle,
+		Undefined,
+		A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+		Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9, Num0,
+		Enter, Esc, Backspace, Tab, Space, Minus, Equal, LeftBracket, RightBracket,
+		Backslash, HashTilde, SemiColon, Apostrophe, Grave, Comma, Dot, Slash, CapsLock,
+		F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+		PrintScreen, ScrollLock, Pause,
+		Insert, Home, PageUp, Delete, End, PageDown,
+		Right, Left, Down, Up,
+		NumLock, NumpadDivide, NumpadMultiply, NumpadMinus, NumpadPlus, NumpadEnter,
+		Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6, Numpad7, Numpad8, Numpad9, Numpad0,
+		NumpadDot,
+		Key102, Compose,
+		RO, Kana, Yen, Henkan, Muhenkan, KpJpComma, Hangeul, Hanja, Katakana, Hiragana, ZenkakuHankaku,
+		PlayPause, Stop, Previous, Next, VolumeUp, VolumeDown, Mute,
+		LeftCtrl, LeftShift, LeftAlt, LeftWin,
+		RightCtrl, RightShift, RightAlt, RightWin,
 	};
 }

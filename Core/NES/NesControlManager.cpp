@@ -30,6 +30,7 @@
 #include "NES/Input/ExcitingBoxingController.h"
 #include "NES/Input/SuborKeyboard.h"
 #include "NES/Input/SuborMouse.h"
+#include "NES/Input/KeyboardMouseHost.h"
 #include "NES/Input/JissenMahjongController.h"
 #include "NES/Input/BarcodeBattlerReader.h"
 #include "NES/Input/HoriTrack.h"
@@ -114,6 +115,7 @@ shared_ptr<BaseControlDevice> NesControlManager::CreateControllerDevice(Controll
 		case ControllerType::ExcitingBoxing: device.reset(new ExcitingBoxingController(_emu, keys)); break;
 		case ControllerType::JissenMahjong: device.reset(new JissenMahjongController(_emu, keys)); break;
 		case ControllerType::SuborKeyboard: device.reset(new SuborKeyboard(_emu, keys)); break;
+		case ControllerType::KeyboardMouseHost: device.reset(new KeyboardMouseHost(_emu, keys)); break;
 		case ControllerType::BarcodeBattler: device.reset(new BarcodeBattlerReader(_emu)); break;
 		case ControllerType::HoriTrack: device.reset(new HoriTrack(_emu, keys)); break;
 		case ControllerType::BandaiHyperShot: device.reset(new BandaiHyperShot(_console, keys)); break;
@@ -189,7 +191,9 @@ void NesControlManager::UpdateControlDevices()
 
 bool NesControlManager::IsKeyboardConnected()
 {
-	return HasControlDevice(ControllerType::FamilyBasicKeyboard) || HasControlDevice(ControllerType::SuborKeyboard);
+	return HasControlDevice(ControllerType::FamilyBasicKeyboard)
+		|| HasControlDevice(ControllerType::SuborKeyboard)
+		|| HasControlDevice(ControllerType::KeyboardMouseHost);
 }
 
 uint8_t NesControlManager::GetOpenBusMask(uint8_t port)

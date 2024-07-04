@@ -97,6 +97,7 @@ namespace Mesen.ViewModels
 			ControllerType.ExcitingBoxing,
 			ControllerType.JissenMahjong,
 			ControllerType.SuborKeyboard,
+			ControllerType.KeyboardMouseHost,
 			ControllerType.BarcodeBattler,
 			ControllerType.HoriTrack,
 			ControllerType.BandaiHyperShot,

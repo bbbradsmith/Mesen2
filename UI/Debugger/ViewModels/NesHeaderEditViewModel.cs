@@ -666,6 +666,7 @@ public class NesHeaderEditViewModel : DisposableViewModel
 		StandardControllerWithSwappedButtons = 0x31, //not supported yet
 		ExcaliborSudokuPad = 0x32, //not supported yet
 		AblPinball = 0x33, //not supported yet
-		GoldenNuggetCasino = 0x34 //not supported yet
+		GoldenNuggetCasino = 0x34, //not supported yet
+		KeyboardMouseHost = 0x35,
 	}
 }

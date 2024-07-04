@@ -106,7 +106,7 @@ namespace Mesen.Config
 			}
 
 			if(customKeys != null) {
-				mappings.CustomKeys = new UInt16[100];
+				mappings.CustomKeys = new UInt16[128];
 				for(int i = 0; i < customKeys.Length; i++) {
 					mappings.CustomKeys[i] = customKeys[i];
 				}
@@ -317,6 +317,7 @@ namespace Mesen.Config
 		ExcitingBoxing,
 		JissenMahjong,
 		SuborKeyboard,
+		KeyboardMouseHost,
 		BarcodeBattler,
 		HoriTrack,
 		BandaiHyperShot,
@@ -399,6 +400,7 @@ namespace Mesen.Config
 				case ControllerType.FamilyTrainerMatSideB:
 				case ControllerType.SuborKeyboard:
 				case ControllerType.FamilyBasicKeyboard:
+				case ControllerType.KeyboardMouseHost:
 				case ControllerType.Pachinko:
 				case ControllerType.PartyTap:
 				case ControllerType.VbController:

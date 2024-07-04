@@ -63,6 +63,7 @@
     <ClInclude Include="GBA\Debugger\MgbaLogHandler.h" />
     <ClInclude Include="NES\HdPacks\HdBuilderPpu.h" />
     <ClInclude Include="NES\HdPacks\HdPackBuilder.h" />
+    <ClInclude Include="NES\Input\KeyboardMouseHost.h" />
     <ClInclude Include="PCE\CdRom\PceCdSeekDelay.h" />
     <ClInclude Include="Shared\ColorUtilities.h" />
     <ClInclude Include="Shared\Utilities\emu2413.h" />
