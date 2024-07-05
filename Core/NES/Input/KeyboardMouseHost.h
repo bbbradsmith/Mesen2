@@ -12,7 +12,7 @@ private:
 	bool onScreen;
 	uint8_t kbold[17];
 	EmuSettings* _settings = nullptr;
-	static const int FRAMES_PER_WHEEL = 15; // simulated mouse wheel roll speed
+	static const int FramesPerWheel = 15; // simulated mouse wheel roll speed
 
 protected:
 	string GetKeyNames() override
@@ -152,7 +152,7 @@ public:
 					uint8_t w = 0;
 					if (wu) w--;
 					if (wd) w++;
-					wheelTimeout = FRAMES_PER_WHEEL;
+					wheelTimeout = FramesPerWheel;
 					ms |= (w & 0x80) >> 1; // sign bit
 					ms |= (w & 0x0F) << 3; // value
 				}
