@@ -232,6 +232,8 @@ namespace Mesen.Utilities
 					}
 				} else if(InputApi.HasControlDevice(ControllerType.OekaKidsTablet)) {
 					return CursorImage.Cross;
+				} else if(InputApi.HasControlDevice(ControllerType.KeyboardMouseHost) && !ConfigApi.GetNesConfig().KeyboardMouseHostRelative && ConfigApi.GetNesConfig().KeyboardMouseHostMouseOn) {
+					return CursorImage.Hidden;
 				}
 
 				if((DateTime.Now - _lastMouseMove).TotalSeconds > 1) {
