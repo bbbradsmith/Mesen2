@@ -401,7 +401,7 @@ namespace Mesen.Config
 						InputApi.GetKeyCode("Numpad 9"), InputApi.GetKeyCode("Numpad 0"),
 						InputApi.GetKeyCode("Numpad ."),
 						0, // Non-US \ |
-						InputApi.GetKeyCode("Start Application 1"),
+						0, // Compose
 						0, // RO
 						InputApi.GetKeyCode("Kana Mode"),
 						0, // Yen
