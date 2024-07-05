@@ -2284,12 +2284,12 @@ E
 			<Value ID="NumpadDot">$63 Numpad - Dot</Value>
 			<Value ID="Key102">$64 Key 102 (\|)</Value>
 			<Value ID="Compose">$65 Compose</Value>
-			<Value ID="RO">$66 RO International</Value>
+			<Value ID="RO">$66 Ro</Value>
 			<Value ID="Kana">$67 Kana</Value>
 			<Value ID="Yen">$68 Yen</Value>
 			<Value ID="Henkan">$69 Henkan</Value>
 			<Value ID="Muhenkan">$6A Muhenkan</Value>
-			<Value ID="KpJpComma">$6B KP JP Comma</Value>
+			<Value ID="KpJpComma">$6B Kp/Jp Comma</Value>
 			<Value ID="Hangeul">$6C Hangeul</Value>
 			<Value ID="Hanja">$6D Hanja</Value>
 			<Value ID="Katakana">$6E Katakana</Value>

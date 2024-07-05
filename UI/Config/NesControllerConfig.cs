@@ -402,12 +402,12 @@ namespace Mesen.Config
 						InputApi.GetKeyCode("Numpad ."),
 						0, // Non-US \ |
 						0, // Compose
-						0, // RO
+						0, // Ro
 						InputApi.GetKeyCode("Kana Mode"),
 						0, // Yen
 						0, // Henkan
 						0, // Muhenkan
-						0, // KPJPCOMMA
+						0, // Kp/Jp Comma
 						0, // Hangeul
 						0, // Hanja
 						0, // Katakana
