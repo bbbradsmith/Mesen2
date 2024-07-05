@@ -193,7 +193,7 @@ bool NesControlManager::IsKeyboardConnected()
 {
 	return HasControlDevice(ControllerType::FamilyBasicKeyboard)
 		|| HasControlDevice(ControllerType::SuborKeyboard)
-		|| HasControlDevice(ControllerType::KeyboardMouseHost);
+		|| (HasControlDevice(ControllerType::KeyboardMouseHost) && _console->GetNesConfig().KeyboardMouseHostKeyOn);
 }
 
 uint8_t NesControlManager::GetOpenBusMask(uint8_t port)
