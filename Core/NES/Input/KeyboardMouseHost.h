@@ -7,8 +7,9 @@ class KeyboardMouseHost : public BaseControlDevice
 {
 private:
 	uint32_t d3, d4;
-	uint8_t wheel_timeout;
+	uint8_t wheelTimeout;
 	bool relative;
+	bool onScreen;
 	uint8_t kbold[17];
 	EmuSettings* _settings = nullptr;
 	static const int FRAMES_PER_WHEEL = 15; // simulated mouse wheel roll speed
@@ -35,7 +36,7 @@ protected:
 		Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6, Numpad7, Numpad8, Numpad9, Numpad0,
 		NumpadDot,
 		Key102, Compose,
-		RO, Kana, Yen, Henkan, Muhenkan, KpJpComma, Hangeul, Hanja, Katakana, Hiragana, ZenkakuHankaku,
+		Ro, Kana, Yen, Henkan, Muhenkan, KpJpComma, Hangeul, Hanja, Katakana, Hiragana, ZenkakuHankaku,
 		PlayPause, Stop, Previous, Next, VolumeUp, VolumeDown, Mute,
 		LeftCtrl, LeftShift, LeftAlt, LeftWin,
 		RightCtrl, RightShift, RightAlt, RightWin,
@@ -46,22 +47,19 @@ protected:
 	void Serialize(Serializer& s) override
 	{
 		BaseControlDevice::Serialize(s);
-		SV(d3); SV(d4); SV(wheel_timeout); SV(relative); SVArray(kbold,17);
+		SV(d3); SV(d4); SV(wheelTimeout); SV(relative); SV(onScreen); SVArray(kbold,17);
 	}
 
 	void InternalSetStateFromInput() override
 	{
-		bool mouse_on = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
-		if (mouse_on) {
+		bool mouseOn = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
+		if (mouseOn) {
 			relative = _settings->GetNesConfig().KeyboardMouseHostRelative;
+			onScreen = _emu->GetSettings()->IsInputEnabled(); // SetMovement/SetCoordinates can fail to set while in background
 			if (relative) {
 				SetMovement(KeyManager::GetMouseMovement(_emu, _settings->GetInputConfig().MouseSensitivity));
 			} else {
 				MousePosition pos = KeyManager::GetMousePosition();
-				if (pos.X < 0 || pos.Y < 0) { // Indicate offscreen with 255,255
-					pos.X = 255;
-					pos.Y = 255;
-				}
 				SetCoordinates(pos);
 			}
 		}
@@ -78,9 +76,11 @@ public:
 	{
 		d3 = 0;
 		d4 = 0;
-		wheel_timeout = 0;
+		wheelTimeout = 0;
+		onScreen = false;
 		relative = false;
-		for (int i = 0; i < 17; i++) kbold[i] = 0;
+		for (int i = 0; i < 17; i++)
+			kbold[i] = 0;
 		_settings = _emu->GetSettings();
 	}
 
@@ -109,35 +109,42 @@ public:
 
 	void RefreshStateBuffer() override
 	{
-		bool mouse_on = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
-		bool key_on = _settings->GetNesConfig().KeyboardMouseHostKeyOn;
+		bool mouseOn = _settings->GetNesConfig().KeyboardMouseHostMouseOn;
+		bool keyOn = _settings->GetNesConfig().KeyboardMouseHostKeyOn;
 
 		uint8_t status = 0x06 | // device ID
 			(relative ? 0x08 : 0x00) |
-			(key_on   ? 0x10 : 0x00) |
-			(mouse_on ? 0x20 : 0x00) |
+			(keyOn    ? 0x10 : 0x00) |
+			(mouseOn  ? 0x20 : 0x00) |
 			(IsPressed(Buttons::MouseRight) ? 0x40 : 0x00) |
 			(IsPressed(Buttons::MouseLeft)  ? 0x80 : 0x00);
 
 		uint8_t mx = 0;
 		uint8_t my = 0;
 		uint8_t ms = 0;
-		if (mouse_on) {
+		if (mouseOn) {
 			if (relative) {
-				MouseMovement mov = GetMovement();
-				int8_t rx = std::clamp(int(mov.dx),-128,127);
-				int8_t ry = std::clamp(int(mov.dy),-128,127);
-				mx = uint8_t(rx); // reinterpret signed difference as unsigned
-				my = uint8_t(ry);
-			} else {
+				if (onScreen) {
+					MouseMovement mov = GetMovement();
+					int8_t rx = std::clamp(int(mov.dx),-128,127);
+					int8_t ry = std::clamp(int(mov.dy),-128,127);
+					mx = uint8_t(rx); // reinterpret signed difference as unsigned
+					my = uint8_t(ry);
+				}
+			} else { // absolute
 				MousePosition pos = GetCoordinates();
-				mx = std::clamp(int(pos.X),0,255);
-				my = std::clamp(int(pos.Y),0,255);
+				if (!onScreen || pos.X < 0 || pos.Y < 0) {
+					mx = 255;
+					my = 255;
+				} else {
+					mx = std::clamp(int(pos.X),0,255);
+					my = std::clamp(int(pos.Y),0,255);
+				}
 			}
 			ms = IsPressed(Buttons::MouseMiddle) ? 0x80 : 00;
 			// scroll wheel simulated with a rate-limiting timeout on a button/key hold
-			if (wheel_timeout > 0) {
-				wheel_timeout--;
+			if (wheelTimeout > 0) {
+				wheelTimeout--;
 			} else {
 				bool wu = IsPressed(Buttons::MouseWheelUp);
 				bool wd = IsPressed(Buttons::MouseWheelDown);
@@ -145,17 +152,17 @@ public:
 					uint8_t w = 0;
 					if (wu) w--;
 					if (wd) w++;
-					wheel_timeout = FRAMES_PER_WHEEL;
+					wheelTimeout = FRAMES_PER_WHEEL;
 					ms |= (w & 0x80) >> 1; // sign bit
 					ms |= (w & 0x0F) << 3; // value
 				}
 			}
 		} else {
-			status &= 0x3F; // Suppress mouse buttons
+			status &= 0x3F; // Suppress mouse buttons if not enabled
 		}
 
 		uint8_t khit[4] = { 0 };
-		if (key_on) {
+		if (keyOn) {
 			// Transfer changed keys into make/break scancode buffer
 			uint8_t kbnew[17] = { 0 };
 			int hits = 0;

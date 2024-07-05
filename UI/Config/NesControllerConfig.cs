@@ -593,7 +593,7 @@ namespace Mesen.Config
 		Numpad1, Numpad2, Numpad3, Numpad4, Numpad5, Numpad6, Numpad7, Numpad8, Numpad9, Numpad0,
 		NumpadDot,
 		Key102, Compose,
-		RO, Kana, Yen, Henkan, Muhenkan, KpJpComma, Hangeul, Hanja, Katakana, Hiragana, ZenkakuHankaku,
+		Ro, Kana, Yen, Henkan, Muhenkan, KpJpComma, Hangeul, Hanja, Katakana, Hiragana, ZenkakuHankaku,
 		PlayPause, Stop, Previous, Next, VolumeUp, VolumeDown, Mute,
 		LeftCtrl, LeftShift, LeftAlt, LeftWin,
 		RightCtrl, RightShift, RightAlt, RightWin,
