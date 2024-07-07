@@ -220,6 +220,7 @@ enum class ControllerType
 
 	//Game Boy
 	GameboyController,
+	GameboyAccelerometer,
 
 	//PC Engine
 	PceController,
@@ -431,7 +432,7 @@ struct GbaConfig
 {
 	ControllerConfig Controller;
 
-	bool SkipBootScreen = true;
+	bool SkipBootScreen = false;
 	bool DisableFrameSkipping = false;
 
 	bool BlendFrames = true;
