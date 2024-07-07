@@ -301,16 +301,12 @@ void ShortcutKeyHandler::ProcessShortcutReleased(EmulatorShortcut shortcut, uint
 
 void ShortcutKeyHandler::CheckMappedKeys()
 {
-	uint64_t shortcutStart = 0;
-	uint64_t shortcutEnd = (uint64_t)EmulatorShortcut::ShortcutCount;
-
-	if(_emu->IsKeyboardConnected() && !_emu->IsPaused()) {
-		//Disable all shortcut keys except pause if a keyboard is connected to the console
-		shortcutStart = (uint64_t)EmulatorShortcut::Pause;
-		shortcutEnd = shortcutStart + 1;
+	if(_emu->IsKeyboardConnected()) {
+		//Disable all shortcut keys if a keyboard is connected to the console
+		return;
 	}
 
-	for(uint64_t i = shortcutStart; i < shortcutEnd; i++) {
+	for(uint64_t i = 0; i < (uint64_t)EmulatorShortcut::ShortcutCount; i++) {
 		EmulatorShortcut shortcut = (EmulatorShortcut)i;
 		if(DetectKeyPress(shortcut)) {
 			if(!IsShortcutAllowed(shortcut, 0)) {
