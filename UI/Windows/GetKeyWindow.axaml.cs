@@ -26,6 +26,13 @@ namespace Mesen.Windows
 		private List<UInt16> _prevScanCodes = new List<UInt16>();
 		private TextBlock lblCurrentKey;
 		private bool _allowKeyboardOnly;
+		private List<ushort> _momentaryCodes = new List<ushort>();
+		private List<bool> _momentaryHit = new List<bool>();
+
+		private static readonly string[] MomentaryNames = {
+			"Print Screen",
+			"Pause"
+		};
 
 		public string HintLabel { get; }
 		public bool SingleKeyMode { get; set; } = false;
@@ -43,6 +50,13 @@ namespace Mesen.Windows
 
 			//Required for keyboard input to work properly in Linux/macOS
 			this.Focusable = true;
+
+			_momentaryCodes = new List<ushort>(MomentaryNames.Length);
+			_momentaryHit = new List<bool>(MomentaryNames.Length);
+			foreach(string name in MomentaryNames) {
+				_momentaryCodes.Add(InputApi.GetKeyCode(name));
+				_momentaryHit.Add(false);
+			}
 
 			InitializeComponent();
 
@@ -69,14 +83,32 @@ namespace Mesen.Windows
 
 		private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
 		{
+			//System.Diagnostics.Debug.WriteLine("KeyDown: "+e.Key.ToString());
+
 			InputApi.SetKeyState((UInt16)e.Key, true);
 			DbgShortcutKey = new DbgShortKeys(e.KeyModifiers, e.Key);
+			
+			// Track momentary keys which may have immediate KeyUp following
+			int m = _momentaryCodes.IndexOf((UInt16)e.Key);
+			if(m >= 0) {
+				_momentaryHit[m] = true;
+			}
+
 			e.Handled = true;
 		}
 
 		private void OnPreviewKeyUp(object? sender, KeyEventArgs e)
 		{
+			//System.Diagnostics.Debug.WriteLine("KeyUp: "+e.Key.ToString());
+
 			InputApi.SetKeyState((UInt16)e.Key, false);
+
+			// Track momentary keys which may have KeyUp without KeyDown
+			int m = _momentaryCodes.IndexOf((UInt16)e.Key);
+			if(m >= 0) {
+				_momentaryHit[m] = true;
+			}
+
 			if(_allowKeyboardOnly) {
 				this.Close();
 			}
@@ -126,6 +158,17 @@ namespace Mesen.Windows
 				InputApi.SetKeyState(MouseManager.MouseButton5KeyCode, mouseInsideWindow && mouseState.Button5);
 
 				List<UInt16> scanCodes = InputApi.GetPressedKeys();
+
+				// Momentary keys must persist for at least one update
+				for(ushort i = 0; i < _momentaryHit.Count; i++) {
+					if(_momentaryHit[i]) {
+						ushort code = _momentaryCodes[i];
+						if (!scanCodes.Contains(code)) {
+							scanCodes.Add(code);
+						}
+						_momentaryHit[i] = false;
+					}
+				}
 
 				if(this.SingleKeyMode) {
 					if(scanCodes.Count >= 1) {
