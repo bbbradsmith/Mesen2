@@ -2284,7 +2284,7 @@ E
 			<Value ID="NumpadDot">$63 Numpad - Dot</Value>
 			<Value ID="Key102">$64 Key 102 (\|)</Value>
 			<Value ID="Compose">$65 Compose</Value>
-			<Value ID="RO">$66 Ro</Value>
+			<Value ID="Ro">$66 Ro</Value>
 			<Value ID="Kana">$67 Kana</Value>
 			<Value ID="Yen">$68 Yen</Value>
 			<Value ID="Henkan">$69 Henkan</Value>
